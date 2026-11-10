@@ -14,7 +14,8 @@
 - Trabajo en Windows. Los finales de línea están fijados a LF en `.gitattributes`.
 
 ## Comandos
-- Base de datos: `pnpm db:up` (Postgres 16 en Docker, usuario/clave/bd `psst`).
+- Base de datos: `pnpm db:up` (Postgres 16 en Docker en el puerto 5433 del host,
+  usuario/clave/bd `psst`).
 - API: en `apps/api`, `uv sync`, `uv run alembic upgrade head`,
   `uv run uvicorn app.main:app --reload`.
 - Web: `pnpm install` y `pnpm dev:web`.
@@ -24,7 +25,8 @@
 
 ## Estado
 - [x] Fase 0: esqueleto (monorepo, Postgres en Docker, lint, tests, CI).
-- [ ] Fase 1 en adelante: ver el plan más abajo.
+- [x] Fase 1: grupos y unión con PIN.
+- [ ] Fase 2 en adelante: ver el plan más abajo.
 
 ---
 
@@ -156,7 +158,7 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 1. Grupos y unión: modelos, migración inicial, crear grupo, unirse con PIN,
    sesión y bloqueo por intentos.
    Verificable: tests con httpx de crear, unirse, recuperar sesión y bloqueo.
-   Commit: "feat: groups and PIN join"
+   Commit: "feat: groups and PIN join". HECHA.
 2. Sala de espera: apuntados, lista de deseos y exclusiones, con el cliente
    generado desde OpenAPI.
    Verificable: el flujo completo funciona en el navegador con dos sesiones.
