@@ -1,0 +1,159 @@
+/* Revelado: dos hojas de celosía sobre el nombre que giran en 3D hacia fuera.
+   Mientras se abren, el nombre pasa de desenfocado a nítido y la sombra de la celosía
+   resbala sobre él y se desvanece. Después entra lo demás (presupuesto, lista de deseos). */
+
+.window {
+  position: relative;
+  height: clamp(200px, 56vw, 250px);
+  border-radius: var(--radio-bloque);
+  background: var(--sombra);
+  display: grid;
+  place-items: center;
+  padding: 0 18px;
+  perspective: 900px;
+}
+
+.name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(54px, 16vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  color: var(--albero);
+}
+
+/* Cada hoja cubre media ventana y gira sobre su bisagra (el borde exterior). */
+.leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  backface-visibility: hidden;
+}
+
+.left {
+  left: 0;
+  border-radius: var(--radio-bloque) 0 0 var(--radio-bloque);
+  transform-origin: left center;
+}
+
+.right {
+  right: 0;
+  border-radius: 0 var(--radio-bloque) var(--radio-bloque) 0;
+  transform-origin: right center;
+  /* Que el dibujo siga sin corte entre las dos hojas. */
+  mask-position: right top;
+}
+
+/* La sombra de la celosía sobre el nombre: solo existe mientras se abre. */
+.shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radio-bloque);
+  background: var(--sombra);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Con movimiento reducido (o antes de que cargue la animación) las hojas simplemente no están. */
+.opening .leaf {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .opening .leaf {
+    visibility: visible;
+    animation: 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
+  }
+
+  .opening .left {
+    animation-name: open-left;
+  }
+
+  .opening .right {
+    animation-name: open-right;
+  }
+
+  .opening .name {
+    animation: focus 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) both;
+  }
+
+  .opening .shadow {
+    animation: shadow-slide 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
+  }
+
+  .after {
+    animation: rise 0.6s var(--ease-out) 1.05s both;
+  }
+}
+
+@keyframes open-left {
+  to {
+    transform: rotateY(-108deg);
+  }
+}
+
+@keyframes open-right {
+  to {
+    transform: rotateY(108deg);
+  }
+}
+
+@keyframes focus {
+  from {
+    filter: blur(14px);
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes shadow-slide {
+  from {
+    opacity: 0.75;
+    transform: translate(0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(38px, 14px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.facts li {
+  padding: 6px 13px;
+  border-radius: var(--radio-pildora);
+  background: var(--sombra);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.wishlist {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  line-height: 1.55;
+}

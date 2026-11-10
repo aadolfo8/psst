@@ -95,3 +95,24 @@ class Exclusion(Base):
         ForeignKey("participants.id", ondelete="CASCADE")
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Assignment(Base):
+    """Quién regala a quién. Las restricciones unique garantizan en la propia BD que el
+    sorteo es una biyección: cada persona regala una vez y recibe una vez."""
+
+    __tablename__ = "assignments"
+    __table_args__ = (
+        CheckConstraint("giver_id <> receiver_id", name="not_self"),
+        UniqueConstraint("group_id", "giver_id", name="uq_assignments_group_id_giver_id"),
+        UniqueConstraint("group_id", "receiver_id", name="uq_assignments_group_id_receiver_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id", ondelete="CASCADE"))
+    giver_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("participants.id", ondelete="CASCADE"))
+    receiver_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("participants.id", ondelete="CASCADE")
+    )
+    # Cuándo vio quien regala su resultado; mientras nadie lo haya visto se puede repetir el sorteo.
+    revealed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -51,9 +51,9 @@ async def test_participants_in_join_order_without_private_data(lobby) -> None:
 
     assert response.status_code == 200
     assert response.json() == [
-        {"id": lobby["ana"], "name": "Ana", "is_admin": True},
-        {"id": lobby["luis"], "name": "Luis", "is_admin": False},
-        {"id": lobby["marta"], "name": "Marta", "is_admin": False},
+        {"id": lobby["ana"], "name": "Ana", "is_admin": True, "has_revealed": False},
+        {"id": lobby["luis"], "name": "Luis", "is_admin": False, "has_revealed": False},
+        {"id": lobby["marta"], "name": "Marta", "is_admin": False, "has_revealed": False},
     ]
 
 

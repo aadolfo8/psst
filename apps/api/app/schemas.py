@@ -67,6 +67,8 @@ class Me(BaseModel):
     name: str
     is_admin: bool
     wishlist: str
+    # Si ya has visto a quién le regalas (para no repetir la animación del revelado).
+    revealed: bool
     group: GroupPublic
 
 
@@ -76,6 +78,7 @@ class ParticipantPublic(BaseModel):
     id: uuid.UUID
     name: str
     is_admin: bool
+    has_revealed: bool
 
 
 class WishlistUpdate(BaseModel):
@@ -107,3 +110,15 @@ class ExclusionOut(BaseModel):
     id: uuid.UUID
     participant_a: ParticipantRef
     participant_b: ParticipantRef
+
+
+class RevealedReceiver(BaseModel):
+    id: uuid.UUID
+    name: str
+    wishlist: str
+
+
+class Reveal(BaseModel):
+    """Lo que ve quien regala. Nunca incluye nada de quien le regala a él."""
+
+    receiver: RevealedReceiver

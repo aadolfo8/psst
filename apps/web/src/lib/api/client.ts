@@ -16,6 +16,7 @@ export type Me = Schemas["Me"];
 export type GroupPublic = Schemas["GroupPublic"];
 export type ParticipantPublic = Schemas["ParticipantPublic"];
 export type ExclusionOut = Schemas["ExclusionOut"];
+export type RevealedReceiver = Schemas["RevealedReceiver"];
 
 /** Mensaje para mostrar a partir del cuerpo de una respuesta de error de la API. */
 export function errorMessage(error: unknown): string {

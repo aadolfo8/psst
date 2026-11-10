@@ -3,7 +3,7 @@
  * Tras una acción (unirse, guardar, añadir exclusión…) basta con `revalidate()`
  * para que se vuelvan a ejecutar y la pantalla muestre el estado nuevo.
  */
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 
 import { api } from "../lib/api/client";
 
@@ -54,4 +54,27 @@ export async function groupLoader({ params }: LoaderFunctionArgs) {
     participants: participants.data ?? [],
     exclusions: exclusions?.data ?? [],
   };
+}
+
+/**
+ * Revelado. Sin sesión o sin sorteo, de vuelta a la sala. Si ya habías visto tu resultado se
+ * pide aquí mismo y la pantalla sale abierta; si no, el nombre no se pide hasta que pulsas
+ * "abrir la celosía" (así no está en la página antes de tiempo).
+ */
+export async function revealLoader({ params }: LoaderFunctionArgs) {
+  const slug = slugFrom(params);
+  const path = { params: { path: { slug } } };
+
+  const { data: me, response } = await api.GET("/groups/{slug}/me", path);
+  if (response.status === 401) throw redirect(`/g/${slug}`);
+  if (!me) throw loadFailed(response.status);
+  if (me.group.status !== "drawn") throw redirect(`/g/${slug}`);
+
+  if (!me.revealed) return { me, receiver: null };
+  const { data: revealed, response: revealResponse } = await api.POST(
+    "/groups/{slug}/me/reveal",
+    path,
+  );
+  if (!revealed) throw loadFailed(revealResponse.status);
+  return { me, receiver: revealed.receiver };
 }

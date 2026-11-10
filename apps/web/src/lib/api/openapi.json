@@ -525,6 +525,92 @@
         }
       }
     },
+    "/groups/{slug}/draw": {
+      "post": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Make Draw",
+        "description": "Hace el sorteo (o lo repite si nadie ha visto todavía su resultado).\n\nTodo ocurre en una transacción: o se guardan todas las asignaciones y el grupo pasa a\n\"drawn\", o no cambia nada. La respuesta no dice nada de quién regala a quién: el\norganizador también participa y solo ve lo suyo.",
+        "operationId": "make_draw_groups__slug__draw_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/me/reveal": {
+      "post": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Reveal",
+        "description": "A quién le regalas y su lista de deseos. La primera vez marca el resultado como visto.\n\nEs un POST porque tiene efecto: una vez visto, el organizador ya no puede repetir el sorteo.",
+        "operationId": "reveal_groups__slug__me_reveal_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reveal"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -770,6 +856,10 @@
             "type": "string",
             "title": "Wishlist"
           },
+          "revealed": {
+            "type": "boolean",
+            "title": "Revealed"
+          },
           "group": {
             "$ref": "#/components/schemas/GroupPublic"
           }
@@ -780,6 +870,7 @@
           "name",
           "is_admin",
           "wishlist",
+          "revealed",
           "group"
         ],
         "title": "Me"
@@ -820,13 +911,18 @@
           "is_admin": {
             "type": "boolean",
             "title": "Is Admin"
+          },
+          "has_revealed": {
+            "type": "boolean",
+            "title": "Has Revealed"
           }
         },
         "type": "object",
         "required": [
           "id",
           "name",
-          "is_admin"
+          "is_admin",
+          "has_revealed"
         ],
         "title": "ParticipantPublic",
         "description": "Lo que ven los demás de un participante en la sala de espera: sin lista de deseos."
@@ -849,6 +945,43 @@
           "name"
         ],
         "title": "ParticipantRef"
+      },
+      "Reveal": {
+        "properties": {
+          "receiver": {
+            "$ref": "#/components/schemas/RevealedReceiver"
+          }
+        },
+        "type": "object",
+        "required": [
+          "receiver"
+        ],
+        "title": "Reveal",
+        "description": "Lo que ve quien regala. Nunca incluye nada de quien le regala a él."
+      },
+      "RevealedReceiver": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "wishlist": {
+            "type": "string",
+            "title": "Wishlist"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "wishlist"
+        ],
+        "title": "RevealedReceiver"
       },
       "ValidationError": {
         "properties": {

@@ -155,6 +155,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/draw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Draw
+         * @description Hace el sorteo (o lo repite si nadie ha visto todavía su resultado).
+         *
+         *     Todo ocurre en una transacción: o se guardan todas las asignaciones y el grupo pasa a
+         *     "drawn", o no cambia nada. La respuesta no dice nada de quién regala a quién: el
+         *     organizador también participa y solo ve lo suyo.
+         */
+        post: operations["make_draw_groups__slug__draw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/me/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal
+         * @description A quién le regalas y su lista de deseos. La primera vez marca el resultado como visto.
+         *
+         *     Es un POST porque tiene efecto: una vez visto, el organizador ya no puede repetir el sorteo.
+         */
+        post: operations["reveal_groups__slug__me_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -274,6 +320,8 @@ export interface components {
             is_admin: boolean;
             /** Wishlist */
             wishlist: string;
+            /** Revealed */
+            revealed: boolean;
             group: components["schemas"]["GroupPublic"];
         };
         /**
@@ -300,6 +348,8 @@ export interface components {
             name: string;
             /** Is Admin */
             is_admin: boolean;
+            /** Has Revealed */
+            has_revealed: boolean;
         };
         /** ParticipantRef */
         ParticipantRef: {
@@ -310,6 +360,25 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * Reveal
+         * @description Lo que ve quien regala. Nunca incluye nada de quien le regala a él.
+         */
+        Reveal: {
+            receiver: components["schemas"]["RevealedReceiver"];
+        };
+        /** RevealedReceiver */
+        RevealedReceiver: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Wishlist */
+            wishlist: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -688,6 +757,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_draw_groups__slug__draw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_groups__slug__me_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reveal"];
+                };
             };
             /** @description Validation Error */
             422: {

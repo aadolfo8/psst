@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.deps import CurrentParticipantDep, DbSession
-from app.models import Group, Participant, ParticipantSession
+from app.models import Assignment, Group, Participant, ParticipantSession
 from app.schemas import GroupCreate, GroupPublic, Me, ParticipantCredentials
 from app.security import (
     LOCKOUT_DURATION,
@@ -53,12 +53,16 @@ def set_session_cookie(response: Response, slug: str, token: str) -> None:
     )
 
 
-def build_me(participant: Participant, group: Group) -> Me:
+async def build_me(db: AsyncSession, participant: Participant, group: Group) -> Me:
+    revealed_at = await db.scalar(
+        select(Assignment.revealed_at).where(Assignment.giver_id == participant.id)
+    )
     return Me(
         id=participant.id,
         name=participant.name,
         is_admin=group.admin_participant_id == participant.id,
         wishlist=participant.wishlist,
+        revealed=revealed_at is not None,
         group=GroupPublic.model_validate(group),
     )
 
@@ -94,7 +98,7 @@ async def create_group(data: GroupCreate, response: Response, db: DbSession) -> 
     await db.commit()
 
     set_session_cookie(response, group.slug, token)
-    return build_me(admin, group)
+    return await build_me(db, admin, group)
 
 
 @router.get("/{slug}")
@@ -129,7 +133,7 @@ async def join_group(
     await db.commit()
 
     set_session_cookie(response, slug, token)
-    return build_me(participant, group)
+    return await build_me(db, participant, group)
 
 
 @router.post("/{slug}/sessions")
@@ -171,9 +175,9 @@ async def log_in(slug: str, data: ParticipantCredentials, response: Response, db
     await db.commit()
 
     set_session_cookie(response, slug, token)
-    return build_me(participant, group)
+    return await build_me(db, participant, group)
 
 
 @router.get("/{slug}/me")
-async def get_me(current: CurrentParticipantDep) -> Me:
-    return build_me(current.participant, current.group)
+async def get_me(current: CurrentParticipantDep, db: DbSession) -> Me:
+    return await build_me(db, current.participant, current.group)

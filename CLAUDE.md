@@ -26,7 +26,8 @@
 - [x] Fase 0: esqueleto (monorepo, Postgres en Docker, lint, tests, CI).
 - [x] Fase 1: grupos y unión con PIN.
 - [x] Fase 2: sala de espera, lista de deseos y exclusiones.
-- [ ] Fase 3 en adelante: ver el plan más abajo.
+- [x] Fase 3: sorteo con exclusiones y revelado.
+- [ ] Fase 4 en adelante: ver el plan más abajo.
 
 ---
 
@@ -179,7 +180,7 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
 3. Sorteo y revelado: algoritmo con tests de Hypothesis y pantalla de revelado
    con la animación de la celosía que se abre.
    Verificable: tests verdes y caso imposible gestionado.
-   Commit: "feat: constrained draw and reveal"
+   Commit: "feat: constrained draw and reveal". HECHA.
 4. Chat asíncrono: endpoints REST, persistencia y no leídos, más tests de que
    no se filtra la identidad.
    Verificable: el receptor nunca recibe el giver_id.

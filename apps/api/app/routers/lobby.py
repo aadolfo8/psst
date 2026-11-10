@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
 from app.deps import CurrentAdminDep, CurrentParticipantDep, DbSession
-from app.models import Exclusion, Group, Participant
+from app.models import Assignment, Exclusion, Group, Participant
 from app.routers.groups import build_me
 from app.schemas import (
     ExclusionCreate,
@@ -33,14 +33,22 @@ def ensure_not_drawn(group: Group) -> None:
 async def list_participants(
     current: CurrentParticipantDep, db: DbSession
 ) -> list[ParticipantPublic]:
-    participants = await db.scalars(
-        select(Participant)
+    # El outer join trae, si existe, la asignación en la que la persona regala: solo interesa
+    # si ya la ha visto, nunca a quién le toca.
+    rows = await db.execute(
+        select(Participant, Assignment.revealed_at)
+        .outerjoin(Assignment, Assignment.giver_id == Participant.id)
         .where(Participant.group_id == current.group.id)
         .order_by(Participant.created_at, Participant.id)
     )
     return [
-        ParticipantPublic(id=p.id, name=p.name, is_admin=p.id == current.group.admin_participant_id)
-        for p in participants
+        ParticipantPublic(
+            id=p.id,
+            name=p.name,
+            is_admin=p.id == current.group.admin_participant_id,
+            has_revealed=revealed_at is not None,
+        )
+        for p, revealed_at in rows
     ]
 
 
@@ -51,7 +59,7 @@ async def update_wishlist(
     # Solo existe la ruta /me: nadie puede editar la lista de otra persona.
     current.participant.wishlist = data.wishlist
     await db.commit()
-    return build_me(current.participant, current.group)
+    return await build_me(db, current.participant, current.group)
 
 
 @router.patch("")

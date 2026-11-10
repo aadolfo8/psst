@@ -17,7 +17,7 @@ type Props = {
   exclusions: ExclusionOut[];
 };
 
-/** Lo que solo ve el organizador: invitar, exclusiones y cerrar inscripciones. */
+/** Lo que solo ve el organizador: invitar, cerrar inscripciones, exclusiones y sorteo. */
 export default function AdminPanel({ group, participants, exclusions }: Props) {
   const { revalidate } = useRevalidator();
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,13 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
     run(() => api.PATCH("/groups/{slug}", { ...path, body: { status } }));
   }
 
+  function makeDraw() {
+    run(() => api.POST("/groups/{slug}/draw", path));
+  }
+
   const isOpen = group.status === "open";
+  const isDrawn = group.status === "drawn";
+  const seen = participants.filter((p) => p.has_revealed).length;
 
   return (
     <section className={g.admin} aria-labelledby="admin-title">
@@ -76,7 +82,7 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
         <p className={ui.hint}>
           {isOpen
             ? "Cualquiera con el enlace puede unirse. Ciérralas cuando estéis todos."
-            : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar. El sorteo llegará en la siguiente fase."}
+            : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
         <div className={g.actions}>
           {isOpen && (
@@ -84,22 +90,25 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
               invitar a más gente
             </Link>
           )}
-          <button
-            type="button"
-            className={isOpen ? ui.button : ui.ghost}
-            disabled={sending}
-            onClick={() => setStatus(isOpen ? "closed" : "open")}
-          >
-            {isOpen ? "cerrar inscripciones" : "reabrir inscripciones"}
-          </button>
+          {!isDrawn && (
+            <button
+              type="button"
+              className={isOpen ? ui.button : ui.ghost}
+              disabled={sending}
+              onClick={() => setStatus(isOpen ? "closed" : "open")}
+            >
+              {isOpen ? "cerrar inscripciones" : "reabrir inscripciones"}
+            </button>
+          )}
         </div>
       </div>
 
       <div className={g.adminPart}>
         <h3 className={ui.subtitle}>exclusiones</h3>
         <p className={ui.hint}>
-          Parejas que no pueden tocarse entre sí, en ningún sentido. Por ejemplo, una pareja que
-          ya se hace regalos.
+          {isDrawn
+            ? "El sorteo ya está hecho: las exclusiones no se pueden cambiar."
+            : "Parejas que no pueden tocarse entre sí, en ningún sentido. Por ejemplo, una pareja que ya se hace regalos."}
         </p>
 
         {exclusions.length > 0 && (
@@ -109,30 +118,33 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
                 <span>{e.participant_a.name}</span>
                 <NoMatchIcon />
                 <span>{e.participant_b.name}</span>
-                <button
-                  type="button"
-                  className={g.remove}
-                  disabled={sending}
-                  onClick={() => removeExclusion(e.id)}
-                  aria-label={`quitar la exclusión entre ${e.participant_a.name} y ${e.participant_b.name}`}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                    <path
-                      d="M3 3l8 8M11 3l-8 8"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
+                {!isDrawn && (
+                  <button
+                    type="button"
+                    className={g.remove}
+                    disabled={sending}
+                    onClick={() => removeExclusion(e.id)}
+                    aria-label={`quitar la exclusión entre ${e.participant_a.name} y ${e.participant_b.name}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                      <path
+                        d="M3 3l8 8M11 3l-8 8"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                )}
               </li>
             ))}
           </ul>
         )}
 
-        {participants.length < 2 ? (
+        {!isDrawn && participants.length < 2 && (
           <p className={ui.muted}>Hacen falta al menos dos personas apuntadas.</p>
-        ) : (
+        )}
+        {!isDrawn && participants.length >= 2 && (
           <form className={ui.form} onSubmit={addExclusion}>
             <div className={ui.row}>
               <ParticipantSelect name="a" label="persona" participants={participants} />
@@ -142,6 +154,34 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
               añadir exclusión
             </button>
           </form>
+        )}
+      </div>
+
+      <div className={g.adminPart}>
+        <div className={g.partHead}>
+          <h3 className={ui.subtitle}>sorteo</h3>
+          <span className={g.state} data-open={isDrawn}>
+            {isDrawn ? "hecho" : "pendiente"}
+          </span>
+        </div>
+        <p className={ui.hint}>
+          {isOpen && "Cuando cierres las inscripciones podrás hacer el sorteo."}
+          {group.status === "closed" &&
+            "Cada persona descubrirá desde su móvil a quién le regala. Nadie más lo verá, tampoco tú."}
+          {isDrawn &&
+            (seen === 0
+              ? "Mientras nadie haya mirado su resultado, puedes repetirlo."
+              : `${seen} de ${participants.length} ya lo han visto, así que el sorteo no se puede repetir.`)}
+        </p>
+        {group.status === "closed" && (
+          <button type="button" className={ui.button} disabled={sending} onClick={makeDraw}>
+            hacer el sorteo
+          </button>
+        )}
+        {isDrawn && seen === 0 && (
+          <button type="button" className={ui.ghost} disabled={sending} onClick={makeDraw}>
+            repetir el sorteo
+          </button>
         )}
       </div>
 

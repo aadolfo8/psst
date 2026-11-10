@@ -37,6 +37,23 @@ export default function Lobby({ me, participants, exclusions }: Props) {
       <GroupHeader group={group} />
       <Steps status={group.status} />
 
+      {group.status === "drawn" && (
+        <section className={ui.block}>
+          <h2 className={ui.subtitle}>el sorteo está hecho</h2>
+          <p className={ui.hint}>
+            {me.revealed
+              ? "Ya sabes a quién le regalas. Puedes volver a verlo cuando quieras."
+              : "Ya puedes descubrir a quién le regalas. Solo lo vas a ver tú."}
+          </p>
+          <Link
+            className={me.revealed ? ui.ghost : ui.button}
+            to={`/g/${group.slug}/revelado`}
+          >
+            {me.revealed ? "ver a quién le regalo" : "descubrir a quién le regalo"}
+          </Link>
+        </section>
+      )}
+
       <section className={ui.block}>
         <div className={g.sectionHead}>
           <h2 className={ui.subtitle}>apuntados</h2>
@@ -94,6 +111,7 @@ function Person({ participant, isMe }: { participant: ParticipantPublic; isMe: b
       </span>
       <span className={g.personName}>{participant.name}</span>
       {role && <span className={g.role}>{role}</span>}
+      {participant.has_revealed && <span className={g.seen}>ya lo ha visto</span>}
     </li>
   );
 }
