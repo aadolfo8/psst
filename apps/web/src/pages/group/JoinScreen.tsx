@@ -3,8 +3,8 @@ import { Link, useRevalidator } from "react-router";
 
 import { PinField } from "../../components/PinField";
 import { api, errorMessage, type GroupPublic } from "../../lib/api/client";
-import { groupDetails } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
+import GroupHeader from "./GroupHeader";
 
 type Mode = "join" | "login";
 
@@ -44,12 +44,7 @@ export default function JoinScreen({ group }: { group: GroupPublic }) {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
-      <h1 className={ui.title}>{group.name}</h1>
-      <ul className={ui.details}>
-        {groupDetails(group).map((detail) => (
-          <li key={detail}>{detail}</li>
-        ))}
-      </ul>
+      <GroupHeader group={group} invite />
 
       <form className={ui.block} onSubmit={handleSubmit}>
         <h2 className={ui.subtitle}>{mode === "join" ? "únete al grupo" : "vuelve a entrar"}</h2>

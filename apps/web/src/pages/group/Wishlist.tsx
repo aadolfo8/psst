@@ -2,6 +2,9 @@ import { useState, type FormEvent } from "react";
 
 import { api, errorMessage, type Me } from "../../lib/api/client";
 import ui from "../../styles/ui.module.css";
+import g from "./group.module.css";
+
+const MAX_LENGTH = 1000;
 
 export default function Wishlist({ me }: { me: Me }) {
   // Estado local: el polling de la sala no pisa lo que estás escribiendo.
@@ -41,7 +44,7 @@ export default function Wishlist({ me }: { me: Me }) {
         className={ui.input}
         value={text}
         onChange={(event) => setText(event.target.value)}
-        maxLength={1000}
+        maxLength={MAX_LENGTH}
         aria-label="tu lista de deseos"
         placeholder="me encantaría…"
       />
@@ -50,9 +53,30 @@ export default function Wishlist({ me }: { me: Me }) {
           {error}
         </p>
       )}
-      <button className={ui.ghost} disabled={sending || unchanged}>
-        {unchanged && saved ? "guardada" : "guardar"}
-      </button>
+      <div className={g.wishFooter}>
+        {unchanged && saved ? (
+          <span className={g.saved}>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M3 8.5l3 3 7-7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            guardada
+          </span>
+        ) : (
+          <button className={unchanged ? ui.ghost : ui.button} disabled={sending || unchanged}>
+            {sending ? "guardando…" : "guardar"}
+          </button>
+        )}
+        <span className={g.counter}>
+          {text.length}/{MAX_LENGTH}
+        </span>
+      </div>
     </form>
   );
 }
