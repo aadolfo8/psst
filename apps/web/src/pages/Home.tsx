@@ -1,4 +1,4 @@
-import styles from "./page.module.css";
+import styles from "./Home.module.css";
 
 export default function Home() {
   return (
@@ -9,8 +9,8 @@ export default function Home() {
         regalarte.
       </h1>
       <p className={styles.lead}>
-        El amigo invisible por enlace. Cada uno ve solo su nombre y puede preguntar a
-        su persona sin que sepa quién es.
+        El amigo invisible por enlace. Cada uno ve solo su nombre y puede preguntar a su persona
+        sin que sepa quién es.
       </p>
       <p className={styles.note}>En construcción.</p>
     </main>

@@ -8,9 +8,8 @@
 - No metas dependencias sin justificarlas.
 - Tengo que poder explicar todo el código en una entrevista: prefiere soluciones
   simples y legibles a soluciones ingeniosas.
-- `apps/web/AGENTS.md` lo genera Next.js: esta versión de Next (16) puede diferir de
-  lo que conoces. Consulta `apps/web/node_modules/next/dist/docs/` antes de usar APIs
-  que no tengas claras.
+- React Router (v8) y Vite (v8) pueden diferir de lo que conoces: consulta
+  `apps/web/node_modules/react-router/docs/` antes de usar APIs que no tengas claras.
 - Trabajo en Windows. Los finales de línea están fijados a LF en `.gitattributes`.
 
 ## Comandos
@@ -66,8 +65,13 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   solo si nadie ha visto todavía su resultado).
 
 ## Stack y decisiones
-- Monorepo: apps/web (Next.js App Router, pnpm) y apps/api (FastAPI, Python 3.12,
-  gestionado con uv).
+- Monorepo: apps/web (Vite + React + TypeScript, pnpm) y apps/api (FastAPI,
+  Python 3.12, gestionado con uv).
+- Frontend: SPA con React Router en modo data (`createBrowserRouter`). Los datos se
+  piden desde el cliente a `/api`, que en desarrollo reenvía el proxy de Vite y en
+  producción Caddy: mismo origen, sin CORS, y la cookie de sesión es de la web.
+  Motivo frente a Next.js: la web es una SPA detrás de una API propia; no necesita
+  renderizado en servidor y en producción se sirve como estáticos, sin Node.
 - Backend: FastAPI + SQLAlchemy 2.0 en modo async con asyncpg, migraciones con
   Alembic y esquemas con Pydantic v2. Configuración con pydantic-settings
   (variables con prefijo `PSST_`).
@@ -76,7 +80,8 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   unique y transacciones. El chat no justifica una base de datos documental:
   son cientos de mensajes por grupo.
 - Estilos: CSS Modules + variables CSS en `globals.css` (sin Tailwind).
-  Tipografía Archivo con `next/font/google` y eje de ancho.
+  Tipografía Archivo autoalojada con `@fontsource-variable/archivo` (eje de ancho),
+  para que funcione sin conexión en la PWA y no dependa de Google Fonts.
 - Tipos compartidos: se genera el cliente TypeScript del frontend a partir del
   OpenAPI de FastAPI (openapi-typescript), en lugar de mantener tipos a mano.
 - Websockets nativos de FastAPI con un ConnectionManager propio en memoria:
@@ -84,7 +89,8 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   documentar en el README que con varios workers habría que usar LISTEN/NOTIFY
   de Postgres o Redis pub/sub.
 - Notificaciones push: Web Push con claves VAPID y la librería pywebpush,
-  más un service worker en Next. En iOS solo funciona si la web está instalada
+  más un service worker propio generado con vite-plugin-pwa (estrategia
+  injectManifest, para poder escribir el manejador de `push`). En iOS solo funciona si la web está instalada
   en la pantalla de inicio, así que hay que mostrar una ayuda para instalarla.
 - Sesión sin cuentas: al unirse se crea un token de sesión guardado en una cookie
   httpOnly asociada al grupo. Con nombre + PIN se recupera la sesión en otro
@@ -93,9 +99,10 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   durante 15 minutos, porque 4 cifras se pueden probar todas por fuerza bruta.
 - Anonimato: la API nunca envía al receptor el id ni el nombre de quien le regala,
   ni por REST ni por websocket. Debe haber tests que lo comprueben.
-- Despliegue: Docker Compose en el VPS (web, api, postgres) con Caddy delante
-  para HTTPS automático, que es obligatorio para el service worker y las push.
-  Caddy también hace de proxy para los websockets.
+- Despliegue: Docker Compose en el VPS (caddy, api, postgres). Caddy da HTTPS
+  automático, que es obligatorio para el service worker y las push; sirve el
+  `dist/` de la web como estáticos (con `try_files` a `index.html` para las rutas
+  de la SPA) y hace de proxy de `/api` y de los websockets hacia FastAPI.
 
 ## Algoritmo de sorteo
 - Asignación aleatoria en la que nadie se toca a sí mismo y se respetan

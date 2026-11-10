@@ -10,7 +10,7 @@ preguntarle cosas en un chat anónimo, sin que sepa quién pregunta.
 
 ```
 apps/
-  web/   Next.js (App Router) — PWA
+  web/   Vite + React + TypeScript + React Router — PWA
   api/   FastAPI + SQLAlchemy async + Alembic
 ```
 
