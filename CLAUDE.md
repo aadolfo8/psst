@@ -189,6 +189,8 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
    Verificable: dos navegadores ven los cambios en vivo.
    Commit: "feat: realtime chat via websockets"
 6. PWA y push: manifest, service worker, VAPID, suscripciones y ayuda para iOS.
+   Iconos de la app a partir de `apps/web/public/favicon.svg` (estrella albero
+   sobre añil): apple-touch-icon 180 a sangre (sin esquinas), 192, 512 y maskable.
    Verificable: llega una push en Android y en un iPhone con la web instalada.
    Commit: "feat: PWA and web push"
 7. Pulido visual y modo demo.

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Logo de psst: la estrella de ocho puntas de la celosía, encendida en albero sobre añil.
+       La estrella es un cuadrado y el mismo cuadrado girado 45°, centrados en (32, 32). -->
+  <rect width="64" height="64" rx="14" fill="#1D2A8C"/>
+  <path fill="#F0B43A" d="M32 12.2L37.8 18H46V26.2L51.8 32L46 37.8V46H37.8L32 51.8L26.2 46H18V37.8L12.2 32L18 26.2V18H26.2Z"/>
+</svg>
