@@ -1,0 +1,59 @@
+/* Tokens de diseño de psst. Fuente de verdad: lienzo "psst — bocetos". */
+:root {
+  --vino: #2a0a10;
+  --superficie: #3a1219;
+  --linea: #5a2530;
+  --texto: #fbedef;
+  --texto-2: #d9a9b1;
+  --rojo: #e0283c;
+  --rosa: #f7c6cf;
+
+  --radio-campo: 10px;
+  --radio-bloque: 18px;
+  --radio-pildora: 999px;
+
+  --gutter: 22px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--vino);
+  color: var(--texto);
+}
+
+body {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--rosa);
+  text-underline-offset: 4px;
+}
+
+a:hover {
+  color: var(--texto);
+}
+
+:focus-visible {
+  outline: 2px solid var(--rosa);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

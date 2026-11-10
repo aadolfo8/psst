@@ -1,0 +1,5 @@
+# Finales de línea LF en todo el repo, también en Windows.
+* text=auto eol=lf
+*.ico binary
+*.png binary
+*.woff2 binary

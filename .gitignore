@@ -1,0 +1,21 @@
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Sistema
+.DS_Store
+Thumbs.db

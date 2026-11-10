@@ -1,0 +1,13 @@
+{
+  "name": "psst",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @psst/web dev",
+    "lint:web": "pnpm --filter @psst/web lint",
+    "typecheck:web": "pnpm --filter @psst/web typecheck",
+    "build:web": "pnpm --filter @psst/web build",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down"
+  }
+}
