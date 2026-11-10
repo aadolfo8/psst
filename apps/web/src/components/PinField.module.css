@@ -1,0 +1,52 @@
+/* Cuatro casillas a la vista y un input invisible encima que recibe el texto. */
+.pin {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 54px);
+  gap: 10px;
+}
+
+.box {
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid transparent;
+  border-radius: var(--radio-campo);
+  background: var(--sombra);
+  transition: border-color 0.2s;
+}
+
+/* Cifra escrita: un punto, para que no se lea por encima del hombro. */
+.box[data-filled]::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--cal);
+}
+
+/* La casilla que toca rellenar se marca solo mientras el campo tiene el foco. */
+.pin:focus-within .box[data-active] {
+  border-color: var(--albero);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  font-size: 16px; /* evita el zoom de iOS al enfocar */
+  cursor: text;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .box[data-filled]::after {
+    animation: pop 0.18s var(--ease-out);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.3);
+  }
+}

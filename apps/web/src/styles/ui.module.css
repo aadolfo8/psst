@@ -132,16 +132,6 @@ select.input {
   background-position: right 14px center;
 }
 
-/* El PIN: cuatro cifras grandes y espaciadas en un solo campo. */
-.pin {
-  font-family: var(--display);
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: 0.6em;
-  padding: 8px 14px;
-  max-width: 190px;
-}
-
 .hint {
   margin: 0;
   font-size: 15px;
