@@ -1,7 +1,16 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -62,3 +71,27 @@ class ParticipantSession(Base):
     last_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Exclusion(Base):
+    """Dos participantes que no pueden tocarse entre sí (en ningún sentido).
+
+    La pareja se guarda ordenada (a < b), así "Ana-Luis" y "Luis-Ana" son la misma fila
+    y la restricción unique impide duplicarla.
+    """
+
+    __tablename__ = "exclusions"
+    __table_args__ = (
+        CheckConstraint("participant_a_id < participant_b_id", name="ordered_pair"),
+        UniqueConstraint("group_id", "participant_a_id", "participant_b_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id", ondelete="CASCADE"))
+    participant_a_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("participants.id", ondelete="CASCADE")
+    )
+    participant_b_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("participants.id", ondelete="CASCADE")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

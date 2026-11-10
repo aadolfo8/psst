@@ -25,7 +25,8 @@
 ## Estado
 - [x] Fase 0: esqueleto (monorepo, Postgres en Docker, lint, tests, CI).
 - [x] Fase 1: grupos y unión con PIN.
-- [ ] Fase 2 en adelante: ver el plan más abajo.
+- [x] Fase 2: sala de espera, lista de deseos y exclusiones.
+- [ ] Fase 3 en adelante: ver el plan más abajo.
 
 ---
 
@@ -169,7 +170,7 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 2. Sala de espera: apuntados, lista de deseos y exclusiones, con el cliente
    generado desde OpenAPI.
    Verificable: el flujo completo funciona en el navegador con dos sesiones.
-   Commit: "feat: lobby, wishlist and exclusions"
+   Commit: "feat: lobby, wishlist and exclusions". HECHA.
 3. Sorteo y revelado: algoritmo con tests de Hypothesis y pantalla de revelado
    con la animación de la barra.
    Verificable: tests verdes y caso imposible gestionado.

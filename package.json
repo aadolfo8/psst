@@ -8,6 +8,7 @@
     "typecheck:web": "pnpm --filter @psst/web typecheck",
     "build:web": "pnpm --filter @psst/web build",
     "db:up": "docker compose up -d db",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "gen:api": "uv run --directory apps/api python -m scripts.export_openapi ../web/src/lib/api/openapi.json && pnpm --filter @psst/web gen:types"
   }
 }

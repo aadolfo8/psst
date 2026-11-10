@@ -9,6 +9,7 @@ from pydantic import (
     Field,
     StringConstraints,
     field_validator,
+    model_validator,
 )
 
 
@@ -67,3 +68,42 @@ class Me(BaseModel):
     is_admin: bool
     wishlist: str
     group: GroupPublic
+
+
+class ParticipantPublic(BaseModel):
+    """Lo que ven los demás de un participante en la sala de espera: sin lista de deseos."""
+
+    id: uuid.UUID
+    name: str
+    is_admin: bool
+
+
+class WishlistUpdate(BaseModel):
+    wishlist: Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)]
+
+
+class GroupStatusUpdate(BaseModel):
+    # "drawn" no se puede poner a mano: solo lo pone el sorteo (fase 3).
+    status: Literal["open", "closed"]
+
+
+class ExclusionCreate(BaseModel):
+    participant_a_id: uuid.UUID
+    participant_b_id: uuid.UUID
+
+    @model_validator(mode="after")
+    def different_participants(self) -> "ExclusionCreate":
+        if self.participant_a_id == self.participant_b_id:
+            raise ValueError("una exclusión necesita dos personas distintas")
+        return self
+
+
+class ParticipantRef(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+class ExclusionOut(BaseModel):
+    id: uuid.UUID
+    participant_a: ParticipantRef
+    participant_b: ParticipantRef

@@ -43,3 +43,13 @@ async def get_current_participant(slug: str, request: Request, db: DbSession) ->
 
 
 CurrentParticipantDep = Annotated[CurrentParticipant, Depends(get_current_participant)]
+
+
+async def get_current_admin(current: CurrentParticipantDep) -> CurrentParticipant:
+    """Como get_current_participant, pero solo deja pasar al organizador del grupo."""
+    if current.group.admin_participant_id != current.participant.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "solo el organizador puede hacer esto")
+    return current
+
+
+CurrentAdminDep = Annotated[CurrentParticipant, Depends(get_current_admin)]

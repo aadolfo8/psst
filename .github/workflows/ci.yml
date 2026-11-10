@@ -16,6 +16,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Los tipos de la API (schema.d.ts) tienen que corresponder al openapi.json commiteado.
+      - run: pnpm --filter @psst/web gen:types
+      - run: git diff --exit-code apps/web/src/lib/api/schema.d.ts
       - run: pnpm lint:web
       - run: pnpm typecheck:web
       - run: pnpm build:web
@@ -53,3 +56,6 @@ jobs:
       - run: uv run alembic upgrade head
       - run: uv run alembic check
       - run: uv run pytest
+      # El openapi.json commiteado en la web tiene que corresponder a la API actual.
+      - run: uv run python -m scripts.export_openapi ../web/src/lib/api/openapi.json
+      - run: git diff --exit-code ../web/src/lib/api/openapi.json
