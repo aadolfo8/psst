@@ -1,4 +1,5 @@
-import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource-variable/onest/wght.css";
+import "@fontsource-variable/reem-kufi/wght.css";
 import "./globals.css";
 
 import { StrictMode } from "react";

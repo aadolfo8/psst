@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 
+import { LatticeWindow } from "../components/LatticeWindow";
 import { PinField } from "../components/PinField";
 import { api, errorMessage } from "../lib/api/client";
 import ui from "../styles/ui.module.css";
@@ -8,18 +9,24 @@ import styles from "./Home.module.css";
 
 export default function Home() {
   return (
-    <main className={ui.page}>
-      <span className={ui.logo}>psst</span>
-      <h1 className={styles.title}>
-        A <span role="img" aria-label="nombre oculto" className={styles.bar} /> le toca
-        regalarte.
-      </h1>
-      <p className={styles.lead}>
-        El amigo invisible por enlace. Cada uno ve solo su nombre y puede preguntar a su persona
-        sin que sepa quién es.
-      </p>
-      <CreateGroupForm />
-    </main>
+    <div className={styles.home}>
+      <header className={styles.bar}>
+        <span className={ui.logo}>psst</span>
+      </header>
+      <LatticeWindow hiddenName="Lucía" />
+      <main className={styles.content}>
+        <div className={styles.intro}>
+          <h1 className={styles.title}>
+            pregúntale lo que quieras. <em>sin que sepa que eres tú.</em>
+          </h1>
+          <p className={ui.lead}>
+            El amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe.
+            Sin cuentas: un nombre y un PIN.
+          </p>
+        </div>
+        <CreateGroupForm />
+      </main>
+    </div>
   );
 }
 
@@ -53,7 +60,7 @@ function CreateGroupForm() {
   }
 
   return (
-    <form className={ui.block} onSubmit={handleSubmit}>
+    <form className={`${ui.block} ${styles.form}`} onSubmit={handleSubmit}>
       <h2 className={ui.subtitle}>crea tu grupo</h2>
 
       <label className={ui.field}>
@@ -107,7 +114,7 @@ function CreateGroupForm() {
         </p>
       )}
       <button className={ui.button} disabled={sending}>
-        crear grupo
+        crear el grupo
       </button>
     </form>
   );

@@ -12,13 +12,15 @@ export default function RouteError() {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
-      <h1 className={ui.title}>{notFound ? "Aquí no hay nada." : "Algo ha fallado."}</h1>
+      <h1 className={ui.title}>{notFound ? "aquí no hay nada" : "algo ha fallado"}</h1>
       <p className={ui.lead}>
         {notFound
           ? "Si te han pasado un enlace, comprueba que lo has copiado entero."
           : "Vuelve a intentarlo dentro de un momento."}
       </p>
-      <Link to="/">ir al inicio</Link>
+      <Link to="/" className={ui.textLink}>
+        ir al inicio
+      </Link>
     </main>
   );
 }

@@ -6,7 +6,7 @@ export function PinField({ label = "PIN de 4 cifras" }: { label?: string }) {
     <label className={ui.field}>
       {label}
       <input
-        className={ui.input}
+        className={`${ui.input} ${ui.pin}`}
         name="pin"
         type="password"
         inputMode="numeric"

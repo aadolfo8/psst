@@ -1,24 +1,59 @@
-.title {
-  margin: 28px 0 0;
-  font-weight: 800;
-  font-stretch: 112%;
-  font-size: clamp(36px, 11vw, 46px);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
+.home {
+  min-height: 100dvh;
 }
 
 .bar {
-  display: inline-block;
-  width: 3.4em;
-  height: 0.78em;
-  border-radius: 6px;
-  background: var(--rosa);
-  vertical-align: -0.08em;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--gutter);
 }
 
-.lead {
+.content {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px var(--gutter) 56px;
+  display: grid;
+  gap: 28px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
   margin: 0;
-  max-width: 34ch;
-  font-size: 17px;
-  color: var(--texto-2);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(38px, 10.5vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  word-spacing: 0.1em;
+  text-wrap: balance;
+}
+
+.title em {
+  font-style: normal;
+  color: var(--albero);
+}
+
+.form {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* En pantallas anchas, el titular a la izquierda y el formulario a la derecha. */
+@media (min-width: 860px) {
+  .content {
+    grid-template-columns: 1fr 440px;
+    align-items: start;
+    gap: 56px;
+    padding-top: 48px;
+  }
+
+  .intro {
+    position: sticky;
+    top: 32px;
+  }
 }

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+  <!-- Una pieza de la celosía: lo opaco es la madera; la estrella de ocho puntas y los rombos
+       de las esquinas son los huecos. Se usa como máscara CSS en mosaico. -->
+  <path fill-rule="evenodd" d="M0 0H46V46H0ZM23.00 6.00L27.98 10.98L35.02 10.98L35.02 18.02L40.00 23.00L35.02 27.98L35.02 35.02L27.98 35.02L23.00 40.00L18.02 35.02L10.98 35.02L10.98 27.98L6.00 23.00L10.98 18.02L10.98 10.98L18.02 10.98ZM0 -6L6 0L0 6L-6 0ZM46 -6L52 0L46 6L40 0ZM0 40L6 46L0 52L-6 46ZM46 40L52 46L46 52L40 46Z"/>
+</svg>

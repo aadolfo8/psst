@@ -19,3 +19,6 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Boceto de referencia del diseño (celosía), solo local
+bocetos/

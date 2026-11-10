@@ -81,8 +81,9 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   unique y transacciones. El chat no justifica una base de datos documental:
   son cientos de mensajes por grupo.
 - Estilos: CSS Modules + variables CSS en `globals.css` (sin Tailwind).
-  Tipografía Archivo autoalojada con `@fontsource-variable/archivo` (eje de ancho),
-  para que funcione sin conexión en la PWA y no dependa de Google Fonts.
+  Tipografías Reem Kufi (titulares) y Onest (interfaz) autoalojadas con
+  `@fontsource-variable/reem-kufi` y `@fontsource-variable/onest`, para que
+  funcionen sin conexión en la PWA y no dependan de Google Fonts.
 - Tipos compartidos: se genera el cliente TypeScript del frontend a partir del
   OpenAPI de FastAPI (openapi-typescript), en lugar de mantener tipos a mano.
 - Websockets nativos de FastAPI con un ConnectionManager propio en memoria:
@@ -129,36 +130,40 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 - push_subscriptions: id, participant_id, endpoint, p256dh, auth, created_at
 
 ## Pantallas y flujos
-1. Inicio: titular con una barra que tapa un nombre, formulario para crear grupo
-   y enlace a "Probar la demo".
+1. Inicio: una ventana con celosía que tapa un nombre (solo se lee donde pasas
+   el dedo), titular, formulario para crear grupo y enlace a "Probar la demo".
 2. Compartir: enlace del grupo y botón de WhatsApp con el mensaje ya redactado.
 3. Unirse: nombre + PIN, con la explicación de para qué sirve el PIN.
 4. Sala de espera: apuntados, lista de deseos y, si eres el organizador,
    exclusiones y "Hacer el sorteo".
-5. Revelado: el nombre aparece tapado por una barra rosa que se retira.
+5. Revelado: el nombre está detrás de una celosía de dos hojas que se abren.
    Debajo, la lista de deseos y "Preguntarle algo en secreto".
 6. Chat: dos pestañas, "escribiendo…", "leído" y no leídos. Quien te escribe
-   aparece como una barra, nunca con nombre ni iniciales.
+   aparece como una ventanita de celosía, nunca con nombre ni iniciales.
 7. Activar avisos: se ofrece tras el primer mensaje recibido, con el paso a paso
    para iPhone.
 
 ## Dirección visual
-- Concepto: lo secreto va tapado con una barra, como en un documento censurado,
-  y revelar es quitarla. Las barras son el único elemento llamativo.
-- Colores (ya definidos como variables en `apps/web/src/app/globals.css`):
-  fondo vino #2A0A10, superficies #3A1219, líneas #5A2530, texto #FBEDEF,
-  texto secundario #D9A9B1, rojo #E0283C solo para acciones y para tus mensajes,
-  y rosa #F7C6CF para las barras y la pestaña activa.
-- Tipografía: Archivo. Titulares en peso 800 y ancho 112 %, con interlineado
-  ajustado; interfaz en ancho normal, entre 15 y 17 px.
-- Formas: botones en forma de píldora; campos con 10 px de radio; bloques
-  con 18 px. Bordes finos (1–1,5 px). Sin sombras ni degradados.
-- Texto: frases en minúscula, sin etiquetas en mayúsculas, sin "·" entre datos
-  y sin flechas añadidas al texto de los botones.
-- Movimiento: una sola animación con intención, la barra que se retira en el
-  revelado. Respetar prefers-reduced-motion.
-- Referencia: bocetos de las 7 pantallas en el lienzo de diseño "psst — bocetos"
-  (claude.ai).
+Detalle completo en `apps/web/DESIGN.md`. Resumen:
+- Concepto: la celosía. Ver sin ser visto, como tras la celosía de un patio
+  andaluz. Lo secreto está detrás de la celosía y solo se lee donde da la luz;
+  revelar es abrirla. La celosía (estrella de ocho puntas, `src/assets/lattice.svg`
+  usada como máscara CSS) es el único ornamento.
+- Colores (variables en `apps/web/src/globals.css`): añil #1D2A8C de fondo,
+  añil claro #2A3AA6 para bloques, sombra #0B1150 para campos y lo que hay detrás
+  de la celosía, cal #F5F0E6 para texto y madera, texto secundario #C8CDEE y
+  albero #F0B43A como única luz caliente: acción principal y lo revelado.
+- Tipografía: Reem Kufi en titulares (600–700, interletraje −0,025 em);
+  Onest en la interfaz, entre 15 y 17 px.
+- Formas: botones en píldora; campos con 12 px de radio; bloques con 22 px y sin
+  borde. Sin sombras ni degradados decorativos.
+- Texto: frases en minúscula, sin etiquetas en mayúsculas y sin flechas en los
+  botones.
+- Movimiento: la luz que recorre la celosía del inicio y las hojas que se abren
+  en el revelado (con su sombra resbalando sobre el nombre). Nada más.
+  Respetar prefers-reduced-motion.
+- Referencia: boceto interactivo de la celosía (inicio, revelado y chat),
+  elegido el 10-nov-2026 entre tres propuestas.
 
 ## Plan por fases (un commit por fase, cada fase verificable)
 0. Esqueleto: monorepo, Postgres en Docker, ruff + pytest en la API, lint en web
@@ -172,7 +177,7 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
    Verificable: el flujo completo funciona en el navegador con dos sesiones.
    Commit: "feat: lobby, wishlist and exclusions". HECHA.
 3. Sorteo y revelado: algoritmo con tests de Hypothesis y pantalla de revelado
-   con la animación de la barra.
+   con la animación de la celosía que se abre.
    Verificable: tests verdes y caso imposible gestionado.
    Commit: "feat: constrained draw and reveal"
 4. Chat asíncrono: endpoints REST, persistencia y no leídos, más tests de que

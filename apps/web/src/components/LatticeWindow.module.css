@@ -1,0 +1,48 @@
+.window {
+  position: relative;
+  height: clamp(260px, 42vw, 380px);
+  background: var(--sombra);
+  overflow: hidden;
+  touch-action: pan-y; /* el dedo mueve la luz sin bloquear el scroll vertical */
+  --x: 50%;
+  --y: 50%;
+}
+
+.name {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(92px, 25vw, 260px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--albero);
+  user-select: none;
+}
+
+/* Dos máscaras a la vez: los huecos de la celosía y un círculo de luz donde la celosía desaparece.
+   Con `intersect` solo queda madera donde ambas son opacas: fuera del círculo. */
+.lattice {
+  position: absolute;
+  inset: 0;
+  background: var(--cal);
+  mask:
+    var(--lattice-tile) 0 0 / var(--lattice-size) var(--lattice-size) repeat,
+    radial-gradient(circle at var(--x) var(--y), transparent 0 64px, #000 118px);
+  mask-composite: intersect;
+}
+
+.hint {
+  position: absolute;
+  /* alineado con la columna de contenido de la página (máx. 1040 px) */
+  left: max(var(--gutter), calc((100% - 1040px) / 2 + var(--gutter)));
+  bottom: 14px;
+  padding: 4px 11px;
+  border-radius: var(--radio-pildora);
+  background: var(--cal);
+  color: var(--sombra);
+  font-size: 13px;
+  font-weight: 500;
+}

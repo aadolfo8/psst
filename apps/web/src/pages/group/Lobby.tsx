@@ -40,8 +40,9 @@ export default function Lobby({ me, participants, exclusions }: Props) {
           {participants.map((p) => (
             <li key={p.id}>
               <span>{p.name}</span>
-              <span className={ui.muted}>
-                {[p.id === me.id && "tú", p.is_admin && "organiza"].filter(Boolean).join(" y ")}
+              <span className={ui.tags}>
+                {p.id === me.id && <span className={ui.tag}>tú</span>}
+                {p.is_admin && <span className={ui.tag}>organiza</span>}
               </span>
             </li>
           ))}

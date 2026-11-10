@@ -8,9 +8,11 @@ export default function NotFound() {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
-      <h1 className={ui.title}>Aquí no hay nada.</h1>
+      <h1 className={ui.title}>aquí no hay nada</h1>
       <p className={ui.lead}>Si te han pasado un enlace, comprueba que lo has copiado entero.</p>
-      <Link to="/">ir al inicio</Link>
+      <Link to="/" className={ui.textLink}>
+        ir al inicio
+      </Link>
     </main>
   );
 }

@@ -23,7 +23,7 @@ export default function Share() {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
-      <h1 className={ui.title}>Invita al grupo.</h1>
+      <h1 className={ui.title}>invita a tu gente</h1>
       <p className={ui.lead}>
         Comparte este enlace. Cada persona entra con su nombre y un PIN; no hace falta cuenta.
       </p>
@@ -38,7 +38,9 @@ export default function Share() {
         </button>
       </section>
 
-      <Link to={`/g/${group.slug}`}>ir a la sala de espera</Link>
+      <Link to={`/g/${group.slug}`} className={ui.textLink}>
+        ir a la sala de espera
+      </Link>
     </main>
   );
 }
