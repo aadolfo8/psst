@@ -134,3 +134,18 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # Cuándo lo leyó la otra persona; null mientras no lo haya leído.
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PushSubscription(Base):
+    """Un dispositivo suscrito a avisos push. El endpoint lo da el navegador y es único."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    participant_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("participants.id", ondelete="CASCADE"), index=True
+    )
+    endpoint: Mapped[str] = mapped_column(Text, unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

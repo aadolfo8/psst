@@ -29,7 +29,9 @@
 - [x] Fase 3: sorteo con exclusiones y revelado.
 - [x] Fase 4: chat asíncrono (REST) con tests de anonimato.
 - [x] Fase 5: tiempo real con websockets (mensajes, "escribiendo…" y "leído").
-- [ ] Fase 6 en adelante: ver el plan más abajo.
+- [x] Fase 6: PWA y push (código y tests; falta probar la push en Android e iPhone
+  con HTTPS).
+- [ ] Fase 7 en adelante: ver el plan más abajo.
 
 ---
 
@@ -96,10 +98,14 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   escribiendo…). Se ejecuta uvicorn con un solo worker;
   documentar en el README que con varios workers habría que usar LISTEN/NOTIFY
   de Postgres o Redis pub/sub.
-- Notificaciones push: Web Push con claves VAPID y la librería pywebpush,
-  más un service worker propio generado con vite-plugin-pwa (estrategia
-  injectManifest, para poder escribir el manejador de `push`). En iOS solo funciona si la web está instalada
-  en la pantalla de inicio, así que hay que mostrar una ayuda para instalarla.
+- Notificaciones push: Web Push con claves VAPID (se generan con
+  `uv run python -m scripts.gen_vapid` y van en las variables `PSST_VAPID_*`) y la
+  librería pywebpush. Solo se envía si la otra persona no tiene el websocket abierto;
+  el aviso lleva el texto del mensaje pero nunca nombres. Suscripciones por dispositivo
+  en `push_subscriptions`; las caducadas (404/410) se borran al fallar. Service worker
+  propio (`apps/web/src/sw.ts`) generado con vite-plugin-pwa (estrategia injectManifest,
+  para poder escribir el manejador de `push`; precaché con workbox). En iOS solo funciona
+  si la web está instalada en la pantalla de inicio, así que el chat enseña cómo hacerlo.
 - Sesión sin cuentas: al unirse se crea un token de sesión guardado en una cookie
   httpOnly asociada al grupo. Con nombre + PIN se recupera la sesión en otro
   dispositivo.
@@ -197,7 +203,7 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
    Iconos de la app a partir de `apps/web/public/favicon.svg` (estrella albero
    sobre añil): apple-touch-icon 180 a sangre (sin esquinas), 192, 512 y maskable.
    Verificable: llega una push en Android y en un iPhone con la web instalada.
-   Commit: "feat: PWA and web push"
+   Commit: "feat: PWA and web push". HECHA (pendiente la prueba en móvil con HTTPS).
 7. Pulido visual y modo demo.
    Verificable: alguien ajeno lo entiende y lo prueba en menos de un minuto.
    Commit: "feat: visual polish and demo mode"

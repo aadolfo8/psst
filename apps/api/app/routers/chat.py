@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import CurrentParticipantDep, DbSession
 from app.models import Assignment, Message, Participant
+from app.push import notify
 from app.realtime import manager
 from app.schemas import ChatRole, ChatSummary, Conversation, MessageCreate, MessageOut
 
@@ -116,17 +117,28 @@ async def send_message(
     await db.commit()
     await db.refresh(message)  # para tener created_at, que lo pone la base de datos
 
-    # Empujar el mensaje a la otra persona, tal y como lo vería ella (mine=False).
     other = other_role(role)
-    await manager.send(
-        assignment.receiver_id if role == "giver" else assignment.giver_id,
-        {
-            "type": "message",
-            "role": other,
-            "message": to_message_out(message, other).model_dump(mode="json"),
-        },
-    )
+    other_id = counterpart_of(assignment, role)
+    if manager.is_connected(other_id):
+        # Tiene el chat abierto: le llega en vivo, tal y como lo ve ella (mine=False).
+        as_seen_by_other = to_message_out(message, other).model_dump(mode="json")
+        await manager.send(
+            other_id, {"type": "message", "role": other, "message": as_seen_by_other}
+        )
+    else:
+        # No está: aviso push (si tiene algún dispositivo suscrito).
+        await notify(db, other_id, push_payload(current.group.slug, other, message.body))
     return to_message_out(message, role)
+
+
+def push_payload(slug: str, role: ChatRole, body: str) -> dict[str, str]:
+    """Lo que muestra la notificación. Sin nombres: quien regala puede no haber abierto aún
+    la celosía, y a quien recibe no se le dice nunca quién le escribe."""
+    return {
+        "title": "tu amigo invisible" if role == "receiver" else "a quien regalas",
+        "body": body,
+        "url": f"/g/{slug}/chat",
+    }
 
 
 @router.post("/{role}/read", status_code=status.HTTP_204_NO_CONTENT)

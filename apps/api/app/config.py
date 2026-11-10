@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     web_origin: str = "http://localhost:3000"
     # En producción (HTTPS) tiene que ser True para que la cookie solo viaje cifrada.
     cookie_secure: bool = False
+    # Claves VAPID para las push (ver scripts/gen_vapid.py). Vacías = sin avisos.
+    vapid_private_key: str = ""
+    vapid_public_key: str = ""
+    # Contacto que ven los servicios de push si algo va mal con nuestros envíos.
+    vapid_subject: str = "mailto:hola@example.com"
 
 
 @lru_cache

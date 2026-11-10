@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.db import get_session
-from app.routers import chat, draw, groups, lobby, ws
+from app.routers import chat, draw, groups, lobby, push, ws
 
 app = FastAPI(title="psst API", version="0.1.0")
 app.include_router(groups.router)
@@ -15,6 +15,7 @@ app.include_router(lobby.router)
 app.include_router(draw.router)
 app.include_router(chat.router)
 app.include_router(ws.router)
+app.include_router(push.router)
 
 app.add_middleware(
     CORSMiddleware,

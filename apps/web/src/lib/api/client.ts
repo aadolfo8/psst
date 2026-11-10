@@ -21,6 +21,7 @@ export type ChatRole = Schemas["Conversation"]["role"];
 export type Conversation = Schemas["Conversation"];
 export type MessageOut = Schemas["MessageOut"];
 export type ChatSummary = Schemas["ChatSummary"];
+export type PushSubscriptionIn = Schemas["PushSubscriptionIn"];
 
 /** Mensaje para mostrar a partir del cuerpo de una respuesta de error de la API. */
 export function errorMessage(error: unknown): string {

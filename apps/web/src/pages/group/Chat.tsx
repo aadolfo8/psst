@@ -5,6 +5,7 @@ import { api, errorMessage, type ChatRole, type MessageOut } from "../../lib/api
 import { useChatSocket, type ChatEvent } from "../../lib/useChatSocket";
 import ui from "../../styles/ui.module.css";
 import c from "./chat.module.css";
+import PushPrompt from "./PushPrompt";
 import type { chatLoader } from "../loaders";
 
 const MAX_LENGTH = 1000;
@@ -67,6 +68,10 @@ export default function Chat() {
   // Al mirar una pestaña con mensajes sin leer (o al llegar uno nuevo a la que miras)
   // se marcan como leídos en la API y en local.
   const messages = conversations[tab];
+  // Los avisos se ofrecen cuando ya te han escrito: ahí se entiende para qué sirven.
+  const hasReceivedSomething = Object.values(conversations).some((list) =>
+    list?.some((m) => !m.mine),
+  );
   useEffect(() => {
     if (unreadCount(messages) === 0) return;
     api
@@ -114,6 +119,7 @@ export default function Chat() {
       ) : (
         <>
           <Messages messages={messages} anonymous={tab === "receiver"} typing={typing === tab} />
+          {hasReceivedSomething && <PushPrompt slug={slug} />}
           <Composer
             slug={slug}
             role={tab}

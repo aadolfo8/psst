@@ -214,6 +214,46 @@
   color: var(--cal-2);
 }
 
+/* Invitación a activar los avisos: un bloque en sombra justo encima del cuadro de escribir. */
+.prompt {
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--cal-2);
+}
+
+.prompt p {
+  margin: 0;
+}
+
+.prompt strong {
+  color: var(--cal);
+  font-weight: 600;
+}
+
+.promptActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.promptActions .promptButton {
+  padding: 10px 18px;
+  font-size: 15px;
+}
+
+.shareIcon {
+  margin: 0 4px;
+  vertical-align: -3px;
+  color: var(--cal);
+}
+
 .composer {
   display: flex;
   flex-direction: column;

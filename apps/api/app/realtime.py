@@ -24,6 +24,9 @@ class ConnectionManager:
         if not self._connections[participant_id]:
             del self._connections[participant_id]
 
+    def is_connected(self, participant_id: uuid.UUID) -> bool:
+        return bool(self._connections.get(participant_id))
+
     async def send(self, participant_id: uuid.UUID, event: dict[str, Any]) -> None:
         """Manda el evento a todas las conexiones de esa persona; si no hay, no pasa nada."""
         for websocket in list(self._connections.get(participant_id, ())):

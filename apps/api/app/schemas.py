@@ -155,3 +155,22 @@ class ChatSummary(BaseModel):
 
     as_giver: int
     as_receiver: int
+
+
+# --- push ----------------------------------------------------------------------------------
+
+
+class PushKeys(BaseModel):
+    p256dh: str = Field(max_length=200)
+    auth: str = Field(max_length=100)
+
+
+class PushSubscriptionIn(BaseModel):
+    """Lo que devuelve `pushManager.subscribe()` en el navegador (PushSubscription.toJSON)."""
+
+    endpoint: Annotated[str, StringConstraints(pattern=r"^https://", max_length=2000)]
+    keys: PushKeys
+
+
+class PushPublicKey(BaseModel):
+    public_key: str

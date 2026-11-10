@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.32.0",
     "fastapi>=0.162.2",
     "pydantic-settings>=2.16.2",
+    "pywebpush>=2.5.0",
     "sqlalchemy[asyncio]>=2.1.8",
     "uvicorn[standard]>=0.54.0",
 ]
