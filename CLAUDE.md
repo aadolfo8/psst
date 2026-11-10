@@ -28,7 +28,8 @@
 - [x] Fase 2: sala de espera, lista de deseos y exclusiones.
 - [x] Fase 3: sorteo con exclusiones y revelado.
 - [x] Fase 4: chat asíncrono (REST) con tests de anonimato.
-- [ ] Fase 5 en adelante: ver el plan más abajo.
+- [x] Fase 5: tiempo real con websockets (mensajes, "escribiendo…" y "leído").
+- [ ] Fase 6 en adelante: ver el plan más abajo.
 
 ---
 
@@ -89,7 +90,10 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 - Tipos compartidos: se genera el cliente TypeScript del frontend a partir del
   OpenAPI de FastAPI (openapi-typescript), en lugar de mantener tipos a mano.
 - Websockets nativos de FastAPI con un ConnectionManager propio en memoria:
-  una sala por pareja (assignment). Se ejecuta uvicorn con un solo worker;
+  una conexión por participante (`/groups/{slug}/ws`, misma cookie de sesión y
+  comprobación del Origin) por la que llegan los eventos de sus dos conversaciones.
+  Enviar y marcar leído van por REST; el socket solo empuja (mensaje, leído,
+  escribiendo…). Se ejecuta uvicorn con un solo worker;
   documentar en el README que con varios workers habría que usar LISTEN/NOTIFY
   de Postgres o Redis pub/sub.
 - Notificaciones push: Web Push con claves VAPID y la librería pywebpush,
@@ -188,7 +192,7 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
    Commit: "feat: anonymous async chat". HECHA.
 5. Tiempo real: websockets, ConnectionManager, "escribiendo…" y "leído".
    Verificable: dos navegadores ven los cambios en vivo.
-   Commit: "feat: realtime chat via websockets"
+   Commit: "feat: realtime chat via websockets". HECHA.
 6. PWA y push: manifest, service worker, VAPID, suscripciones y ayuda para iOS.
    Iconos de la app a partir de `apps/web/public/favicon.svg` (estrella albero
    sobre añil): apple-touch-icon 180 a sangre (sin esquinas), 192, 512 y maskable.

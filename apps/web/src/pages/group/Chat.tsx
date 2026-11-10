@@ -2,13 +2,17 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLoaderData, useRevalidator } from "react-router";
 
 import { api, errorMessage, type ChatRole, type MessageOut } from "../../lib/api/client";
-import { usePolling } from "../../lib/usePolling";
+import { useChatSocket, type ChatEvent } from "../../lib/useChatSocket";
 import ui from "../../styles/ui.module.css";
 import c from "./chat.module.css";
 import type { chatLoader } from "../loaders";
 
-const POLL_INTERVAL_MS = 5000;
 const MAX_LENGTH = 1000;
+const TYPING_SHOWN_MS = 3000; // sin nuevos avisos, "escribiendo…" desaparece
+const TYPING_NOTIFY_EVERY_MS = 2000; // como mucho un aviso de "escribiendo" cada tanto
+
+/** Las dos conversaciones por tu papel en cada una; la de giver es null hasta revelar. */
+type Conversations = { receiver: MessageOut[]; giver: MessageOut[] | null };
 
 function unreadCount(messages: MessageOut[] | null): number {
   return messages?.filter((m) => !m.mine && !m.read_at).length ?? 0;
@@ -16,26 +20,65 @@ function unreadCount(messages: MessageOut[] | null): number {
 
 /**
  * Chat con dos pestañas: "quien te regala" (anónimo para ti) y "a quien regalas".
- * Los mensajes salen del loader; tras enviar o marcar como leído se vuelve a pedir, y el
- * polling trae lo que escriba la otra persona.
+ * El loader trae el historial; a partir de ahí todo llega por el websocket (mensajes,
+ * leídos y "escribiendo…") y se guarda en estado local. Enviar y marcar leído van por REST.
  */
 export default function Chat() {
-  const { me, receiverName, asReceiver, asGiver } = useLoaderData<typeof chatLoader>();
+  const data = useLoaderData<typeof chatLoader>();
+  const { me, receiverName } = data;
   const slug = me.group.slug;
   const [tab, setTab] = useState<ChatRole>("receiver");
-  const conversations = { receiver: asReceiver, giver: asGiver };
-  const messages = conversations[tab];
+
+  const [conversations, setConversations] = useState<Conversations>({
+    receiver: data.asReceiver,
+    giver: data.asGiver,
+  });
+  // Si el loader vuelve a ejecutarse (p. ej. tras reconectar), su historial manda.
+  const [loaded, setLoaded] = useState(data);
+  if (loaded !== data) {
+    setLoaded(data);
+    setConversations({ receiver: data.asReceiver, giver: data.asGiver });
+  }
+
+  const [typing, setTyping] = useState<ChatRole | null>(null);
+  const typingTimer = useRef(0);
+
+  function update(role: ChatRole, change: (messages: MessageOut[]) => MessageOut[]) {
+    setConversations((prev) => ({ ...prev, [role]: prev[role] ? change(prev[role]) : null }));
+  }
+
+  function handleEvent(event: ChatEvent) {
+    if (event.type === "message") {
+      update(event.role, (messages) => [...messages, event.message]);
+      if (event.role === typing) setTyping(null);
+    } else if (event.type === "read") {
+      const now = new Date().toISOString();
+      update(event.role, (messages) => messages.map((m) => (m.mine ? { ...m, read_at: now } : m)));
+    } else if (event.type === "typing") {
+      setTyping(event.role);
+      clearTimeout(typingTimer.current);
+      typingTimer.current = window.setTimeout(() => setTyping(null), TYPING_SHOWN_MS);
+    }
+  }
 
   const { revalidate } = useRevalidator();
-  usePolling(revalidate, POLL_INTERVAL_MS);
+  const { sendTyping } = useChatSocket(slug, handleEvent, revalidate);
 
-  // Al mirar una pestaña con mensajes sin leer se marcan como leídos.
+  // Al mirar una pestaña con mensajes sin leer (o al llegar uno nuevo a la que miras)
+  // se marcan como leídos en la API y en local.
+  const messages = conversations[tab];
   useEffect(() => {
     if (unreadCount(messages) === 0) return;
     api
       .POST("/groups/{slug}/chat/{role}/read", { params: { path: { slug, role: tab } } })
-      .then(() => revalidate());
-  }, [slug, tab, messages, revalidate]);
+      .then(() => {
+        const now = new Date().toISOString();
+        setConversations((prev) => ({
+          ...prev,
+          [tab]: prev[tab]?.map((m) => (m.mine || m.read_at ? m : { ...m, read_at: now })) ?? null,
+        }));
+      });
+  }, [slug, tab, messages]);
 
   return (
     <main className={`${ui.page} ${c.screen}`}>
@@ -44,10 +87,15 @@ export default function Chat() {
           psst
         </Link>
         <div className={c.tabs} role="tablist">
-          <Tab role="receiver" current={tab} unread={unreadCount(asReceiver)} onSelect={setTab}>
+          <Tab
+            role="receiver"
+            current={tab}
+            unread={unreadCount(conversations.receiver)}
+            onSelect={setTab}
+          >
             quien te regala
           </Tab>
-          <Tab role="giver" current={tab} unread={unreadCount(asGiver)} onSelect={setTab}>
+          <Tab role="giver" current={tab} unread={unreadCount(conversations.giver)} onSelect={setTab}>
             a quien regalas
           </Tab>
         </div>
@@ -65,8 +113,13 @@ export default function Chat() {
         </section>
       ) : (
         <>
-          <Messages messages={messages} anonymous={tab === "receiver"} />
-          <Composer slug={slug} role={tab} onSent={revalidate} />
+          <Messages messages={messages} anonymous={tab === "receiver"} typing={typing === tab} />
+          <Composer
+            slug={slug}
+            role={tab}
+            onTyping={() => sendTyping(tab)}
+            onSent={(message) => update(tab, (list) => [...list, message])}
+          />
         </>
       )}
     </main>
@@ -139,7 +192,15 @@ function NamedAvatar({ name }: { name: string }) {
   );
 }
 
-function Messages({ messages, anonymous }: { messages: MessageOut[]; anonymous: boolean }) {
+function Messages({
+  messages,
+  anonymous,
+  typing,
+}: {
+  messages: MessageOut[];
+  anonymous: boolean;
+  typing: boolean;
+}) {
   const listRef = useRef<HTMLDivElement>(null);
   const last = messages[messages.length - 1];
 
@@ -147,7 +208,7 @@ function Messages({ messages, anonymous }: { messages: MessageOut[]; anonymous: 
   useEffect(() => {
     const list = listRef.current;
     if (list) list.scrollTop = list.scrollHeight;
-  }, [messages]);
+  }, [messages, typing]);
 
   return (
     <div ref={listRef} className={c.messages} aria-live="polite">
@@ -164,7 +225,17 @@ function Messages({ messages, anonymous }: { messages: MessageOut[]; anonymous: 
           <p>{m.body}</p>
         </div>
       ))}
-      {last?.mine && last.read_at && (
+      {typing && (
+        <div className={`${c.message} ${c.typing}`} aria-label="escribiendo">
+          {anonymous ? <AnonymousAvatar /> : <span className={c.spacer} />}
+          <p>
+            <i />
+            <i />
+            <i />
+          </p>
+        </div>
+      )}
+      {!typing && last?.mine && last.read_at && (
         <span className={c.read}>
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
             <path
@@ -186,15 +257,27 @@ function Messages({ messages, anonymous }: { messages: MessageOut[]; anonymous: 
 function Composer({
   slug,
   role,
+  onTyping,
   onSent,
 }: {
   slug: string;
   role: ChatRole;
-  onSent: () => void;
+  onTyping: () => void;
+  onSent: (message: MessageOut) => void;
 }) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const lastTypingNotice = useRef(0);
+
+  function handleChange(value: string) {
+    setText(value);
+    const now = Date.now();
+    if (value && now - lastTypingNotice.current > TYPING_NOTIFY_EVERY_MS) {
+      lastTypingNotice.current = now;
+      onTyping();
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -210,7 +293,8 @@ function Composer({
 
     if (data) {
       setText("");
-      onSent();
+      lastTypingNotice.current = 0;
+      onSent(data);
     } else {
       setError(errorMessage(error));
     }
@@ -227,7 +311,7 @@ function Composer({
         <input
           className={ui.input}
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => handleChange(event.target.value)}
           maxLength={MAX_LENGTH}
           placeholder="escribe algo…"
           aria-label="mensaje"

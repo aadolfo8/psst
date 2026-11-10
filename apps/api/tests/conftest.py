@@ -4,11 +4,12 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import SessionLocal, engine
 from app.main import app
+from app.models import Assignment
 
 ClientFactory = Callable[[], AbstractAsyncContextManager[AsyncClient]]
 
@@ -58,3 +59,35 @@ async def join(client: AsyncClient, slug: str, name: str, pin: str = "5678") -> 
     response = await client.post(f"/groups/{slug}/participants", json={"name": name, "pin": pin})
     assert response.status_code == 201, response.text
     return response.json()
+
+
+NAMES = ["Luis", "Marta", "Pablo"]
+
+
+@pytest.fixture
+async def drawn(client: AsyncClient, new_client, db: AsyncSession) -> Any:
+    """Grupo de cuatro ya sorteado. `pairs` dice quién regala a quién (leído de la BD, sin
+    revelar nada por la API) para que los tests sepan qué cliente es cada lado."""
+    ana = await create_group(client)
+    slug = ana["group"]["slug"]
+    async with (
+        new_client() as luis_client,
+        new_client() as marta_client,
+        new_client() as pablo_client,
+    ):
+        clients = {"Ana": client, "Luis": luis_client, "Marta": marta_client, "Pablo": pablo_client}
+        ids = {"Ana": ana["id"]}
+        for name in NAMES:
+            ids[name] = (await join(clients[name], slug, name))["id"]
+        await client.patch(f"/groups/{slug}", json={"status": "closed"})
+        assert (await client.post(f"/groups/{slug}/draw")).status_code == 200
+
+        names = {id_: name for name, id_ in ids.items()}
+        rows = (await db.execute(select(Assignment.giver_id, Assignment.receiver_id))).all()
+        pairs = {names[str(giver)]: names[str(receiver)] for giver, receiver in rows}
+        yield {"slug": slug, "clients": clients, "ids": ids, "pairs": pairs}
+
+
+def a_pair(drawn) -> tuple[str, str]:
+    """Nombres de una pareja cualquiera: (quien regala, quien recibe)."""
+    return next(iter(drawn["pairs"].items()))

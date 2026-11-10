@@ -8,12 +8,15 @@ El rol va en la URL y es siempre el de quien hace la petición. Los mensajes no 
 devuelven ningún id de remitente, solo "mine": así la API no puede filtrar la identidad.
 """
 
+import uuid
+
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import CurrentParticipantDep, DbSession
 from app.models import Assignment, Message, Participant
+from app.realtime import manager
 from app.schemas import ChatRole, ChatSummary, Conversation, MessageCreate, MessageOut
 
 router = APIRouter(prefix="/groups/{slug}/chat", tags=["chat"])
@@ -38,6 +41,16 @@ async def get_assignment(db: AsyncSession, participant: Participant, role: ChatR
             status.HTTP_409_CONFLICT, "abre antes la celosía para ver a quién regalas"
         )
     return assignment
+
+
+def counterpart_of(assignment: Assignment, role: ChatRole) -> uuid.UUID:
+    """Quién está al otro lado si tu papel es `role`. Solo sirve para mandarle eventos por
+    websocket: este id nunca llega al cliente."""
+    return assignment.receiver_id if role == "giver" else assignment.giver_id
+
+
+async def counterpart_id(db: AsyncSession, participant: Participant, role: ChatRole) -> uuid.UUID:
+    return counterpart_of(await get_assignment(db, participant, role), role)
 
 
 def to_message_out(message: Message, role: ChatRole) -> MessageOut:
@@ -102,6 +115,17 @@ async def send_message(
     db.add(message)
     await db.commit()
     await db.refresh(message)  # para tener created_at, que lo pone la base de datos
+
+    # Empujar el mensaje a la otra persona, tal y como lo vería ella (mine=False).
+    other = other_role(role)
+    await manager.send(
+        assignment.receiver_id if role == "giver" else assignment.giver_id,
+        {
+            "type": "message",
+            "role": other,
+            "message": to_message_out(message, other).model_dump(mode="json"),
+        },
+    )
     return to_message_out(message, role)
 
 
@@ -119,4 +143,6 @@ async def mark_read(role: ChatRole, current: CurrentParticipantDep, db: DbSessio
         .values(read_at=func.now())
     )
     await db.commit()
+
+    await manager.send(counterpart_of(assignment, role), {"type": "read", "role": other_role(role)})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

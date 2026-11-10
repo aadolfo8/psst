@@ -10,6 +10,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://localhost:8000",
+        ws: true, // también el websocket del chat
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },

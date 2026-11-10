@@ -2,44 +2,10 @@
 
 from typing import Any
 
-import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Assignment, Message
-from tests.conftest import create_group, join
-
-NAMES = ["Luis", "Marta", "Pablo"]
-
-
-@pytest.fixture
-async def drawn(client: AsyncClient, new_client, db: AsyncSession) -> Any:
-    """Grupo de cuatro ya sorteado. `pairs` dice quién regala a quién (leído de la BD, sin
-    revelar nada por la API) para que los tests sepan qué cliente es cada lado."""
-    ana = await create_group(client)
-    slug = ana["group"]["slug"]
-    async with (
-        new_client() as luis_client,
-        new_client() as marta_client,
-        new_client() as pablo_client,
-    ):
-        clients = {"Ana": client, "Luis": luis_client, "Marta": marta_client, "Pablo": pablo_client}
-        ids = {"Ana": ana["id"]}
-        for name in NAMES:
-            ids[name] = (await join(clients[name], slug, name))["id"]
-        await client.patch(f"/groups/{slug}", json={"status": "closed"})
-        assert (await client.post(f"/groups/{slug}/draw")).status_code == 200
-
-        names = {id_: name for name, id_ in ids.items()}
-        rows = (await db.execute(select(Assignment.giver_id, Assignment.receiver_id))).all()
-        pairs = {names[str(giver)]: names[str(receiver)] for giver, receiver in rows}
-        yield {"slug": slug, "clients": clients, "ids": ids, "pairs": pairs}
-
-
-def a_pair(drawn) -> tuple[str, str]:
-    """Nombres de una pareja cualquiera: (quien regala, quien recibe)."""
-    return next(iter(drawn["pairs"].items()))
+from app.models import Message
+from tests.conftest import a_pair, create_group
 
 
 def chat_url(slug: str, role: str) -> str:

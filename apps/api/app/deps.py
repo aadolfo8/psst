@@ -16,14 +16,9 @@ class CurrentParticipant(NamedTuple):
     group: Group
 
 
-async def get_current_participant(slug: str, request: Request, db: DbSession) -> CurrentParticipant:
-    """Participante dueño de la cookie de sesión de este grupo; 401 si no hay sesión válida."""
-    not_authenticated = HTTPException(status.HTTP_401_UNAUTHORIZED, "no has entrado en este grupo")
-
-    token = request.cookies.get(session_cookie_name(slug))
-    if not token:
-        raise not_authenticated
-
+async def find_session(db: AsyncSession, slug: str, token: str) -> CurrentParticipant | None:
+    """Participante y grupo de un token de sesión, o None si no vale para este grupo.
+    Lo usan las rutas HTTP (por la cookie) y el websocket (misma cookie en el handshake)."""
     row = (
         await db.execute(
             select(ParticipantSession, Participant, Group)
@@ -34,12 +29,21 @@ async def get_current_participant(slug: str, request: Request, db: DbSession) ->
         )
     ).first()
     if row is None:
-        raise not_authenticated
+        return None
 
     session, participant, group = row
     session.last_seen_at = func.now()
     await db.commit()
     return CurrentParticipant(participant, group)
+
+
+async def get_current_participant(slug: str, request: Request, db: DbSession) -> CurrentParticipant:
+    """Participante dueño de la cookie de sesión de este grupo; 401 si no hay sesión válida."""
+    token = request.cookies.get(session_cookie_name(slug))
+    current = await find_session(db, slug, token) if token else None
+    if current is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no has entrado en este grupo")
+    return current
 
 
 CurrentParticipantDep = Annotated[CurrentParticipant, Depends(get_current_participant)]
