@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 
+import { DateField } from "../components/DateField";
 import { LatticeWindow } from "../components/LatticeWindow";
 import { PinField } from "../components/PinField";
 import { api, errorMessage } from "../lib/api/client";
@@ -34,7 +35,6 @@ function CreateGroupForm() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const today = new Date().toLocaleDateString("sv-SE"); // formato AAAA-MM-DD en hora local
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,24 +74,20 @@ function CreateGroupForm() {
         />
       </label>
 
-      <div className={ui.row}>
-        <label className={ui.field}>
-          presupuesto (€)
-          <input
-            className={ui.input}
-            name="budget"
-            type="number"
-            min={1}
-            max={1000}
-            inputMode="numeric"
-            placeholder="opcional"
-          />
-        </label>
-        <label className={ui.field}>
-          fecha
-          <input className={ui.input} name="exchange_date" type="date" min={today} />
-        </label>
-      </div>
+      <label className={ui.field}>
+        presupuesto por persona (€)
+        <input
+          className={ui.input}
+          name="budget"
+          type="number"
+          min={1}
+          max={1000}
+          inputMode="numeric"
+          placeholder="opcional"
+        />
+      </label>
+
+      <DateField name="exchange_date" />
 
       <label className={ui.field}>
         tu nombre

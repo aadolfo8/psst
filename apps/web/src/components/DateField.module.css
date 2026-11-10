@@ -1,0 +1,185 @@
+.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: var(--cal-2);
+}
+
+/* ---------- Accesos directos ---------- */
+
+/* Dos columnas en cualquier pantalla: caben en un móvil pequeño y se leen de un vistazo. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.chip {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radio-campo);
+  background: var(--sombra);
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s var(--ease-out);
+}
+
+.chip:hover {
+  border-color: var(--linea);
+}
+
+.chip:active {
+  transform: scale(0.97);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--albero);
+  color: var(--sombra);
+}
+
+.chipDate {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.chipLabel {
+  font-size: 14px;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "elegir otro día": ocupa toda la fila, con el icono del calendario. */
+.other {
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.other[aria-expanded="true"]:not([aria-pressed="true"]) {
+  border-color: var(--linea);
+}
+
+/* ---------- Calendario ---------- */
+
+.calendar {
+  padding: 14px;
+  border-radius: var(--radio-campo);
+  background: var(--sombra);
+  animation: unfold 0.25s var(--ease-out);
+}
+
+.calendarHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.monthName {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.navButton {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--anil);
+  color: var(--cal);
+  cursor: pointer;
+}
+
+.navButton:hover {
+  color: var(--albero);
+}
+
+.navButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+  color: var(--cal);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.weekday {
+  padding-bottom: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--cal-2);
+}
+
+.day {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 42px;
+  justify-self: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cal);
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.day:hover:not(:disabled) {
+  background: var(--anil);
+}
+
+.day[data-today] {
+  box-shadow: inset 0 0 0 1.5px var(--linea);
+}
+
+.day[aria-pressed="true"] {
+  background: var(--albero);
+  color: var(--sombra);
+  font-weight: 700;
+}
+
+.day:disabled {
+  color: var(--cal-2);
+  opacity: 0.35;
+  cursor: default;
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
