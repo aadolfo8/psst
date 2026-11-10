@@ -216,6 +216,21 @@
   }
 }
 
+/* Mensajes sin leer: lo nuevo va en albero, o en sombra si el botón ya es albero. */
+.badge {
+  margin-left: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--sombra);
+  color: var(--cal);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ---------- Lista de deseos ---------- */
 
 .wishFooter {

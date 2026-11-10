@@ -9,5 +9,12 @@ export default function GroupPage() {
   const data = useLoaderData<typeof groupLoader>();
 
   if (data.kind === "guest") return <JoinScreen group={data.group} />;
-  return <Lobby me={data.me} participants={data.participants} exclusions={data.exclusions} />;
+  return (
+    <Lobby
+      me={data.me}
+      participants={data.participants}
+      exclusions={data.exclusions}
+      unread={data.unread}
+    />
+  );
 }

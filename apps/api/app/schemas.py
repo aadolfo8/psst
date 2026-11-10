@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -122,3 +122,36 @@ class Reveal(BaseModel):
     """Lo que ve quien regala. Nunca incluye nada de quien le regala a él."""
 
     receiver: RevealedReceiver
+
+
+# --- chat ----------------------------------------------------------------------------------
+
+# Tu papel en la conversación: "giver" es el chat con la persona a la que regalas;
+# "receiver", el chat con quien te regala (que para ti es anónimo).
+ChatRole = Literal["giver", "receiver"]
+
+
+class MessageCreate(BaseModel):
+    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
+
+
+class MessageOut(BaseModel):
+    """Un mensaje tal y como lo ve cada lado. `mine` sustituye a cualquier id de remitente."""
+
+    id: uuid.UUID
+    mine: bool
+    body: str
+    created_at: datetime
+    read_at: datetime | None
+
+
+class Conversation(BaseModel):
+    role: ChatRole
+    messages: list[MessageOut]
+
+
+class ChatSummary(BaseModel):
+    """Mensajes sin leer en cada conversación, para las pestañas y la sala."""
+
+    as_giver: int
+    as_receiver: int

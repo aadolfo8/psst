@@ -201,6 +201,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chat Summary
+         * @description Mensajes sin leer en cada conversación. Como giver solo cuenta si ya has revelado.
+         */
+        get: operations["chat_summary_groups__slug__chat_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/chat/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Conversation */
+        get: operations["get_conversation_groups__slug__chat__role__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/chat/{role}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Message */
+        post: operations["send_message_groups__slug__chat__role__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/chat/{role}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Read
+         * @description Marca como leídos todos los mensajes de la otra persona en esta conversación.
+         */
+        post: operations["mark_read_groups__slug__chat__role__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -239,6 +313,26 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ChatSummary
+         * @description Mensajes sin leer en cada conversación, para las pestañas y la sala.
+         */
+        ChatSummary: {
+            /** As Giver */
+            as_giver: number;
+            /** As Receiver */
+            as_receiver: number;
+        };
+        /** Conversation */
+        Conversation: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "giver" | "receiver";
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+        };
         /** ExclusionCreate */
         ExclusionCreate: {
             /**
@@ -323,6 +417,33 @@ export interface components {
             /** Revealed */
             revealed: boolean;
             group: components["schemas"]["GroupPublic"];
+        };
+        /** MessageCreate */
+        MessageCreate: {
+            /** Body */
+            body: string;
+        };
+        /**
+         * MessageOut
+         * @description Un mensaje tal y como lo ve cada lado. `mine` sustituye a cualquier id de remitente.
+         */
+        MessageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mine */
+            mine: boolean;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Read At */
+            read_at: string | null;
         };
         /**
          * ParticipantCredentials
@@ -819,6 +940,135 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Reveal"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chat_summary_groups__slug__chat_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_conversation_groups__slug__chat__role__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: "giver" | "receiver";
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_message_groups__slug__chat__role__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: "giver" | "receiver";
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_groups__slug__chat__role__read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: "giver" | "receiver";
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

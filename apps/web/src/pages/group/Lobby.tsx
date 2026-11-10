@@ -20,9 +20,10 @@ type Props = {
   me: Me;
   participants: ParticipantPublic[];
   exclusions: ExclusionOut[];
+  unread: number;
 };
 
-export default function Lobby({ me, participants, exclusions }: Props) {
+export default function Lobby({ me, participants, exclusions, unread }: Props) {
   const { revalidate } = useRevalidator();
   // Vuelve a ejecutar el loader: así aparece quien se acaba de unir.
   usePolling(revalidate, POLL_INTERVAL_MS);
@@ -50,6 +51,10 @@ export default function Lobby({ me, participants, exclusions }: Props) {
             to={`/g/${group.slug}/revelado`}
           >
             {me.revealed ? "ver a quién le regalo" : "descubrir a quién le regalo"}
+          </Link>
+          <Link className={unread > 0 ? ui.button : ui.ghost} to={`/g/${group.slug}/chat`}>
+            chat secreto
+            {unread > 0 && <span className={g.badge}>{unread}</span>}
           </Link>
         </section>
       )}

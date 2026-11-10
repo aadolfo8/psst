@@ -27,7 +27,8 @@
 - [x] Fase 1: grupos y unión con PIN.
 - [x] Fase 2: sala de espera, lista de deseos y exclusiones.
 - [x] Fase 3: sorteo con exclusiones y revelado.
-- [ ] Fase 4 en adelante: ver el plan más abajo.
+- [x] Fase 4: chat asíncrono (REST) con tests de anonimato.
+- [ ] Fase 5 en adelante: ver el plan más abajo.
 
 ---
 
@@ -184,7 +185,7 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
 4. Chat asíncrono: endpoints REST, persistencia y no leídos, más tests de que
    no se filtra la identidad.
    Verificable: el receptor nunca recibe el giver_id.
-   Commit: "feat: anonymous async chat"
+   Commit: "feat: anonymous async chat". HECHA.
 5. Tiempo real: websockets, ConnectionManager, "escribiendo…" y "leído".
    Verificable: dos navegadores ven los cambios en vivo.
    Commit: "feat: realtime chat via websockets"

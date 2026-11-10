@@ -44,15 +44,17 @@ export async function groupLoader({ params }: LoaderFunctionArgs) {
   }
   if (!me) throw loadFailed(response.status);
 
-  const [participants, exclusions] = await Promise.all([
+  const [participants, exclusions, chat] = await Promise.all([
     api.GET("/groups/{slug}/participants", path),
     me.is_admin ? api.GET("/groups/{slug}/exclusions", path) : null,
+    me.group.status === "drawn" ? api.GET("/groups/{slug}/chat", path) : null,
   ]);
   return {
     kind: "member" as const,
     me,
     participants: participants.data ?? [],
     exclusions: exclusions?.data ?? [],
+    unread: (chat?.data?.as_giver ?? 0) + (chat?.data?.as_receiver ?? 0),
   };
 }
 
@@ -77,4 +79,33 @@ export async function revealLoader({ params }: LoaderFunctionArgs) {
   );
   if (!revealed) throw loadFailed(revealResponse.status);
   return { me, receiver: revealed.receiver };
+}
+
+/**
+ * Chat. Siempre está la conversación con quien te regala; la de a quien regalas solo si ya
+ * has abierto la celosía (hasta entonces el nombre no debe aparecer en esta pantalla).
+ */
+export async function chatLoader({ params }: LoaderFunctionArgs) {
+  const slug = slugFrom(params);
+  const path = { params: { path: { slug } } };
+
+  const { data: me, response } = await api.GET("/groups/{slug}/me", path);
+  if (response.status === 401) throw redirect(`/g/${slug}`);
+  if (!me) throw loadFailed(response.status);
+  if (me.group.status !== "drawn") throw redirect(`/g/${slug}`);
+
+  const role = (value: "giver" | "receiver") => ({ params: { path: { slug, role: value } } });
+  const [asReceiver, asGiver, revealed] = await Promise.all([
+    api.GET("/groups/{slug}/chat/{role}", role("receiver")),
+    me.revealed ? api.GET("/groups/{slug}/chat/{role}", role("giver")) : null,
+    me.revealed ? api.POST("/groups/{slug}/me/reveal", path) : null,
+  ]);
+  if (!asReceiver.data) throw loadFailed(asReceiver.response.status);
+
+  return {
+    me,
+    asReceiver: asReceiver.data.messages,
+    asGiver: asGiver?.data?.messages ?? null,
+    receiverName: revealed?.data?.receiver.name ?? null,
+  };
 }

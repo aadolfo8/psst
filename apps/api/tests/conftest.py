@@ -42,7 +42,8 @@ async def db() -> AsyncIterator[AsyncSession]:
 async def clean_tables() -> AsyncIterator[None]:
     yield
     async with engine.begin() as conn:
-        await conn.execute(text("TRUNCATE groups, participants, sessions CASCADE"))
+        # Las demás tablas cuelgan de estas y se vacían en cascada.
+        await conn.execute(text("TRUNCATE groups CASCADE"))
 
 
 async def create_group(client: AsyncClient, **overrides: Any) -> dict[str, Any]:

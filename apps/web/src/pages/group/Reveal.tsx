@@ -98,6 +98,9 @@ export default function Reveal() {
               )}
             </section>
 
+            <Link to={`/g/${group.slug}/chat`} className={ui.button}>
+              preguntarle algo en secreto
+            </Link>
             <Link to={`/g/${group.slug}`} className={ui.textLink}>
               volver a la sala
             </Link>

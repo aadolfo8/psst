@@ -116,3 +116,21 @@ class Assignment(Base):
     )
     # Cuándo vio quien regala su resultado; mientras nadie lo haya visto se puede repetir el sorteo.
     revealed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Message(Base):
+    """Un mensaje del chat de una pareja. Solo guarda el rol de quien lo envía (quien regala
+    o quien recibe), nunca su id: así ni la fila ni la API dicen quién es quien regala."""
+
+    __tablename__ = "messages"
+    __table_args__ = (CheckConstraint("sender_role IN ('giver', 'receiver')", name="sender_role"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    assignment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("assignments.id", ondelete="CASCADE"), index=True
+    )
+    sender_role: Mapped[str] = mapped_column(String(10))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Cuándo lo leyó la otra persona; null mientras no lo haya leído.
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

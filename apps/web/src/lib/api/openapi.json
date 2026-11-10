@@ -611,6 +611,218 @@
         }
       }
     },
+    "/groups/{slug}/chat": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Chat Summary",
+        "description": "Mensajes sin leer en cada conversación. Como giver solo cuenta si ya has revelado.",
+        "operationId": "chat_summary_groups__slug__chat_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/chat/{role}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Get Conversation",
+        "operationId": "get_conversation_groups__slug__chat__role__get",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "giver",
+                "receiver"
+              ],
+              "type": "string",
+              "title": "Role"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/chat/{role}/messages": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Send Message",
+        "operationId": "send_message_groups__slug__chat__role__messages_post",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "giver",
+                "receiver"
+              ],
+              "type": "string",
+              "title": "Role"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/chat/{role}/read": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Mark Read",
+        "description": "Marca como leídos todos los mensajes de la otra persona en esta conversación.",
+        "operationId": "mark_read_groups__slug__chat__role__read_post",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "giver",
+                "receiver"
+              ],
+              "type": "string",
+              "title": "Role"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -658,6 +870,50 @@
   },
   "components": {
     "schemas": {
+      "ChatSummary": {
+        "properties": {
+          "as_giver": {
+            "type": "integer",
+            "title": "As Giver"
+          },
+          "as_receiver": {
+            "type": "integer",
+            "title": "As Receiver"
+          }
+        },
+        "type": "object",
+        "required": [
+          "as_giver",
+          "as_receiver"
+        ],
+        "title": "ChatSummary",
+        "description": "Mensajes sin leer en cada conversación, para las pestañas y la sala."
+      },
+      "Conversation": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "giver",
+              "receiver"
+            ],
+            "title": "Role"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "messages"
+        ],
+        "title": "Conversation"
+      },
       "ExclusionCreate": {
         "properties": {
           "participant_a_id": {
@@ -874,6 +1130,65 @@
           "group"
         ],
         "title": "Me"
+      },
+      "MessageCreate": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "MessageCreate"
+      },
+      "MessageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "mine": {
+            "type": "boolean",
+            "title": "Mine"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "mine",
+          "body",
+          "created_at",
+          "read_at"
+        ],
+        "title": "MessageOut",
+        "description": "Un mensaje tal y como lo ve cada lado. `mine` sustituye a cualquier id de remitente."
       },
       "ParticipantCredentials": {
         "properties": {

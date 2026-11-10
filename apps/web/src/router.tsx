@@ -1,9 +1,10 @@
 import { createBrowserRouter } from "react-router";
 
+import Chat from "./pages/group/Chat";
 import GroupPage from "./pages/group/GroupPage";
 import Reveal from "./pages/group/Reveal";
 import Home from "./pages/Home";
-import { groupLoader, revealLoader, shareLoader } from "./pages/loaders";
+import { chatLoader, groupLoader, revealLoader, shareLoader } from "./pages/loaders";
 import NotFound from "./pages/NotFound";
 import RouteError from "./pages/RouteError";
 import Share from "./pages/Share";
@@ -22,6 +23,13 @@ export const router = createBrowserRouter([
     path: "/g/:slug/revelado",
     loader: revealLoader,
     Component: Reveal,
+    ErrorBoundary: RouteError,
+    HydrateFallback: () => null,
+  },
+  {
+    path: "/g/:slug/chat",
+    loader: chatLoader,
+    Component: Chat,
     ErrorBoundary: RouteError,
     HydrateFallback: () => null,
   },

@@ -1,0 +1,221 @@
+/* Chat: cabecera con pestañas, lista de mensajes que ocupa el resto y el cuadro de escribir
+   abajo. Quien te regala es una ventanita de celosía; tus burbujas en cal, las ajenas en añil claro. */
+
+.screen {
+  height: 100dvh;
+  padding-bottom: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--radio-pildora);
+  background: var(--sombra);
+}
+
+.tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: var(--radio-pildora);
+  background: none;
+  color: var(--cal-2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--cal);
+  color: var(--sombra);
+}
+
+.badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--albero);
+  color: var(--sombra);
+  font-size: 12px;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.who strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.1;
+  word-spacing: 0.08em;
+}
+
+.who span {
+  font-size: 13.5px;
+  color: var(--cal-2);
+}
+
+/* Avatares. El anónimo es sombra tras una celosía: se intuye que hay alguien, no quién. */
+.anonymous,
+.named,
+.spacer {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.who .anonymous,
+.who .named {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.anonymous {
+  position: relative;
+  overflow: hidden;
+  background: var(--sombra);
+}
+
+.anonymous i {
+  position: absolute;
+  inset: 0;
+  mask-position: -6px -6px;
+}
+
+.named {
+  display: grid;
+  place-items: center;
+  background: var(--albero);
+  color: var(--sombra);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: none;
+}
+
+.empty {
+  margin: auto;
+  max-width: 28ch;
+  text-align: center;
+  font-size: 15px;
+  color: var(--cal-2);
+}
+
+.message {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 84%;
+  animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+}
+
+.message p {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--anil-2);
+  font-size: 15.5px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mine {
+  align-self: flex-end;
+}
+
+.mine p {
+  border-radius: 18px 18px 6px 18px;
+  background: var(--cal);
+  color: var(--sombra);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.read {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: -2px;
+  font-size: 12.5px;
+  color: var(--cal-2);
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0 18px;
+  border-top: 1px solid var(--linea);
+}
+
+.composerRow {
+  display: flex;
+  gap: 8px;
+}
+
+.composerRow input {
+  border-radius: var(--radio-pildora);
+  padding: 12px 18px;
+}
+
+.send {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--albero);
+  color: var(--sombra);
+  cursor: pointer;
+}
+
+.send:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
