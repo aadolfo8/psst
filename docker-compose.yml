@@ -1,4 +1,4 @@
-# Entorno de desarrollo: solo Postgres. El de producción está en deploy/docker-compose.yml.
+# Entorno de desarrollo: solo Postgres. El de producción está en docker-compose.production.yml.
 services:
   db:
     image: postgres:16-alpine
