@@ -114,15 +114,17 @@ flowchart LR
     end
 
     subgraph VPS["VPS · Docker Compose"]
-        C["Caddy<br/>HTTPS · estáticos · proxy"]
+        CP["Caddy compartido<br/>HTTPS"]
+        C["Caddy de psst<br/>estáticos · proxy"]
         A["FastAPI<br/>REST + WebSocket"]
         P[("PostgreSQL")]
     end
 
     PS["Servicio de push<br/>del navegador"]
 
-    W -- "/api (REST, misma cookie)" --> C
-    W <-- "/api/groups/…/ws" --> C
+    W -- "/api (REST, misma cookie)" --> CP
+    W <-- "/api/groups/…/ws" --> CP
+    CP --> C
     C --> A
     A --> P
     A -- "Web Push (VAPID)" --> PS
@@ -174,7 +176,9 @@ apps/
     src/pages/         pantallas
     src/sw.ts          service worker (caché y push)
     DESIGN.md          sistema visual: la celosía
-deploy/                Compose de producción, Caddyfile e imagen de la web
+deploy/                Caddyfile e imagen de la web (Caddy + estáticos)
+docker-compose.production.yml   producción en el VPS (imágenes de ghcr.io)
+.github/workflows/     CI y despliegue continuo
 ```
 
 ## Arrancarlo
@@ -223,38 +227,100 @@ migraciones están al día y que los tipos de la web corresponden a la API.
 </details>
 
 <details>
-<summary><b>despliegue en un VPS</b></summary>
+<summary><b>despliegue (CI/CD) y preparación del VPS</b></summary>
 
-En un VPS con Docker y un subdominio apuntando a su IP:
+Producción: **https://psst.hidan.es**, en un VPS con Docker Compose y un Caddy
+compartido (`/srv/proxy`) que es lo único que publica los puertos 80/443 y saca el
+HTTPS. psst no publica puertos: su contenedor `web` (Caddy con la web compilada, que
+reenvía `/api` y el websocket a FastAPI) se une a la red externa `proxy` con el alias
+`psst-web` y escucha en el **8080**. La API (`psst-api`) y Postgres (`psst-db`) solo
+están en la red privada de la app.
+
+**Cómo se despliega.** Cada push a `main` pasa el CI (`.github/workflows/ci.yml`). Si
+pasa, `deploy-production.yml`:
+
+1. Construye las imágenes de la API y de la web en GitHub Actions (el VPS tiene poca
+   RAM) y las publica en `ghcr.io/aadolfo8/psst-{api,web}` con el SHA del commit como tag.
+2. Entra por SSH al VPS y, si ese commit no está ya desplegado, escribe el `.env` desde
+   el secret `VPS_ENV_FILE`, hace `git fetch` + `checkout` del commit, `docker compose
+   pull` + `up -d` y espera hasta 180 s a que todo esté *healthy*.
+3. Si algo falla, vuelve al último commit desplegado con éxito (guardado en
+   `/srv/psst/.deployed-sha`) y a sus imágenes.
+
+> **Las migraciones tienen que ser compatibles hacia atrás.** La API aplica las
+> migraciones al arrancar, y el rollback vuelve al código anterior pero **no las
+> deshace**. Así que una migración nunca puede romper la versión anterior: primero se
+> añade (columna nueva con valor por defecto o *nullable*) y solo en un despliegue
+> posterior, cuando ningún código la use, se borra o se renombra lo viejo.
+
+### Preparación del VPS (una sola vez)
+
+**a. Carpeta y clon con una Deploy Key de solo lectura**, como el usuario `deploy`:
 
 ```bash
-git clone https://github.com/aadolfo8/psst.git && cd psst/deploy
-nano .env
-docker compose up -d --build
+sudo install -d -o deploy -g deploy /srv/psst
+
+# Clave para que el VPS lea el repo (privado)
+ssh-keygen -t ed25519 -N "" -C "psst VPS deploy key" -f ~/.ssh/psst_deploy_key
+cat ~/.ssh/psst_deploy_key.pub
+# → GitHub: repo → Settings → Deploy keys → Add deploy key, SIN "Allow write access"
+
+cat >> ~/.ssh/config <<'CONF'
+Host github-psst
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/psst_deploy_key
+  IdentitiesOnly yes
+CONF
+
+git clone git@github-psst:aadolfo8/psst.git /srv/psst
 ```
 
-El `.env` de `deploy/` lleva:
+**b. DNS:** nada que hacer, el comodín `*.hidan.es` ya apunta al VPS.
+
+**c. Sitio en el Caddy compartido.** Crear `/srv/proxy/sites/psst.caddy`:
+
+```caddy
+psst.hidan.es {
+	encode zstd gzip
+	reverse_proxy psst-web:8080
+}
+```
+
+y recargar: `docker exec proxy-caddy-1 caddy reload --config /etc/caddy/Caddyfile`.
+Hasta el primer despliegue Caddy dará 502, porque `psst-web` aún no existe.
+
+### Secrets de GitHub (entorno `production`)
+
+| Secret | Valor |
+|---|---|
+| `VPS_HOST` | IP o nombre del VPS |
+| `VPS_USER` | `deploy` |
+| `VPS_PORT` | puerto SSH del VPS |
+| `VPS_DEPLOY_PATH` | `/srv/psst` |
+| `VPS_SSH_PRIVATE_KEY` | clave privada cuya pública está en `~deploy/.ssh/authorized_keys` |
+| `VPS_KNOWN_HOSTS` | salida de `ssh-keyscan -p <puerto> <host>` (comprueba la huella) |
+| `VPS_ENV_FILE` | el `.env` de producción completo; plantilla en `.env.production.example` |
+
+No hace falta ningún secret para ghcr: las imágenes se publican con el `GITHUB_TOKEN`, y
+el VPS hace `docker login` con el token del propio job (caduca al terminar) y
+`docker logout` al acabar.
+
+### Operar a mano en el VPS
 
 ```bash
-PSST_DOMAIN=psst.tudominio.com
-POSTGRES_PASSWORD=          # openssl rand -base64 24
-PSST_VAPID_PRIVATE_KEY=     # uv run python -m scripts.gen_vapid
-PSST_VAPID_PUBLIC_KEY=
-PSST_VAPID_SUBJECT=mailto:tu@correo.com
-```
+cd /srv/psst
+export PSST_IMAGE_TAG=$(cat .deployed-sha)   # el compose lo necesita para saber qué imágenes
+docker compose -f docker-compose.production.yml ps
+docker compose -f docker-compose.production.yml logs -f api
 
-Caddy pide el certificado HTTPS solo, sirve la web y hace de proxy de `/api` y del
-websocket. La API aplica las migraciones al arrancar.
+# Copia de seguridad de la base de datos
+docker compose -f docker-compose.production.yml exec db pg_dump -U psst psst > psst-$(date +%F).sql
+```
 
 > **Un solo worker.** Las conexiones websocket viven en la memoria del proceso. Para
 > escalar a varios workers o máquinas, los eventos tendrían que pasar por
 > `LISTEN/NOTIFY` de Postgres o por Redis pub/sub. Para grupos de amigos, sobra.
-
-Copia de seguridad de la base de datos:
-
-```bash
-docker compose exec db pg_dump -U psst psst > psst-$(date +%F).sql
-```
 
 </details>
 

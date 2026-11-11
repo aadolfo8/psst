@@ -1,0 +1,245 @@
+name: Deploy production
+
+# Se lanza cuando termina el CI. Solo despliega si el CI pasó en un push a main, y
+# despliega exactamente ese commit (head_sha), no la punta de main en ese momento.
+'on':
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Un despliegue cada vez. Si se acumulan varios, GitHub deja solo el más reciente
+# en cola; como incluye a los anteriores, no se pierde nada.
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+env:
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  # Las imágenes se construyen aquí y no en el VPS, que solo tiene 3,8 GB de RAM.
+  build:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: psst-api
+            context: apps/api
+            file: apps/api/Dockerfile
+          - image: psst-web
+            context: .
+            file: deploy/web.Dockerfile
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ env.DEPLOY_SHA }}
+          # Enlaza el paquete con el repo: así el GITHUB_TOKEN puede leerlo después.
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.DEPLOY_SHA }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+      VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+      VPS_ENV_FILE: ${{ secrets.VPS_ENV_FILE }}
+    steps:
+      - name: Configure SSH
+        id: ssh
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(VPS_HOST VPS_USER VPS_PORT VPS_DEPLOY_PATH VPS_SSH_PRIVATE_KEY VPS_KNOWN_HOSTS VPS_ENV_FILE)
+          for name in "${required[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error title=Missing GitHub secret::$name must be configured for production deployment."
+              exit 1
+            fi
+          done
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # Alias "vps" para no repetir las opciones en cada paso.
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName $VPS_HOST
+            User $VPS_USER
+            Port $VPS_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Check VPS and decide whether to deploy
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          deploy_path=$(printf '%q' "$VPS_DEPLOY_PATH")
+          decision=$(ssh vps "bash -s -- $deploy_path $DEPLOY_SHA" <<'REMOTE'
+          set -euo pipefail
+          deploy_path="$1"
+          sha="$2"
+          test -d "$deploy_path/.git" || { echo "Deployment path is not a Git repository: $deploy_path" >&2; exit 1; }
+          command -v docker >/dev/null || { echo 'Docker is not installed on the VPS.' >&2; exit 1; }
+          docker compose version >/dev/null || { echo 'Docker Compose v2 is not installed on the VPS.' >&2; exit 1; }
+          cd "$deploy_path"
+          git fetch --quiet --prune origin main
+          git merge-base --is-ancestor "$sha" origin/main || { echo "$sha is not in origin/main." >&2; exit 1; }
+          # .deployed-sha guarda el último commit desplegado con éxito (no el HEAD del clon,
+          # que tras el primer git clone ya apunta a main sin que haya nada desplegado).
+          if [[ -f .deployed-sha ]] && git merge-base --is-ancestor "$sha" "$(cat .deployed-sha)"; then
+            echo skip
+          else
+            echo deploy
+          fi
+          REMOTE
+          )
+          echo "VPS decision: $decision"
+          if [[ "$decision" == skip ]]; then
+            echo "::notice title=Deployment skipped::$DEPLOY_SHA is already deployed (or an ancestor of the deployed commit)."
+          fi
+          echo "decision=$decision" >> "$GITHUB_OUTPUT"
+
+      - name: Update production environment file
+        if: steps.check.outputs.decision == 'deploy'
+        shell: bash
+        run: |
+          set -euo pipefail
+          env_path=$(printf '%q' "$VPS_DEPLOY_PATH/.env")
+          printf '%s' "$VPS_ENV_FILE" | base64 | ssh vps "umask 077; base64 -d > $env_path"
+
+      # El repo es privado y sus imágenes también. El VPS se autentica con el GITHUB_TOKEN
+      # de este job, que caduca al terminar; además se cierra la sesión en el último paso.
+      - name: Log the VPS in to ghcr.io
+        if: steps.check.outputs.decision == 'deploy'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io --username $(printf '%q' "$GHCR_USER") --password-stdin"
+
+      - name: Pull, restart, and verify services
+        if: steps.check.outputs.decision == 'deploy'
+        shell: bash
+        run: |
+          set -euo pipefail
+          deploy_path=$(printf '%q' "$VPS_DEPLOY_PATH")
+          ssh vps "bash -s -- $deploy_path $DEPLOY_SHA" <<'REMOTE'
+          set -Eeuo pipefail
+          deploy_path="$1"
+          sha="$2"
+          cd "$deploy_path"
+          compose=(docker compose -f docker-compose.production.yml)
+          previous=''
+          [[ -f .deployed-sha ]] && previous=$(cat .deployed-sha)
+
+          diagnostics() {
+            echo 'Diagnostics: service status and recent logs.' >&2
+            "${compose[@]}" ps --all >&2 || true
+            "${compose[@]}" logs --no-color --tail 100 >&2 || true
+          }
+
+          # Espera a que todos los contenedores estén healthy (máximo 180 s).
+          wait_healthy() {
+            local deadline=$((SECONDS + 180)) ids id state health pending
+            while true; do
+              ids=$("${compose[@]}" ps --all --quiet)
+              [[ -n "$ids" ]] || { echo 'Compose started no services.' >&2; return 1; }
+              pending=false
+              for id in $ids; do
+                read -r state health <<< "$(docker inspect --format '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$id")"
+                if [[ "$health" == unhealthy || "$health" == none || "$state" == exited || "$state" == dead ]]; then
+                  echo "Container $id is not healthy (state: $state, health: $health)." >&2
+                  return 1
+                fi
+                [[ "$health" == healthy ]] || pending=true
+              done
+              $pending || return 0
+              if (( SECONDS >= deadline )); then
+                echo 'Timed out waiting for Compose service health checks.' >&2
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
+          # Si algo falla, vuelve al último commit desplegado con éxito y a sus imágenes.
+          # Las migraciones NO se deshacen: tienen que ser compatibles con el código anterior.
+          rollback() {
+            local status=$?
+            trap - ERR
+            diagnostics
+            if [[ -z "$previous" ]]; then
+              echo 'Deployment failed and there is no previous deployment to restore.' >&2
+              exit "$status"
+            fi
+            echo "Deployment failed; restoring $previous." >&2
+            git checkout --quiet --detach "$previous"
+            PSST_IMAGE_TAG="$previous" "${compose[@]}" up --detach --remove-orphans || true
+            exit "$status"
+          }
+          trap rollback ERR
+
+          git checkout --quiet --detach "$sha"
+          export PSST_IMAGE_TAG="$sha"
+          "${compose[@]}" pull --quiet
+          "${compose[@]}" up --detach --remove-orphans
+          wait_healthy
+          trap - ERR
+
+          echo "$sha" > .deployed-sha
+          echo "Deployed $sha."
+          # Borra las imágenes de psst que no usa nadie y tienen más de una semana.
+          docker image prune --all --force \
+            --filter "label=org.opencontainers.image.source=https://github.com/aadolfo8/psst" \
+            --filter "until=168h" || true
+          REMOTE
+
+      - name: Log the VPS out of ghcr.io
+        if: always() && steps.ssh.outcome == 'success' && steps.check.outputs.decision == 'deploy'
+        shell: bash
+        run: ssh vps 'docker logout ghcr.io' || true
