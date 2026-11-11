@@ -7,18 +7,44 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="psst" />
-    <title>psst</title>
+    <title>psst · el amigo invisible con chat secreto</title>
     <meta
       name="description"
-      content="El amigo invisible por enlace: cada uno ve solo su nombre y puede preguntar a su persona sin que sepa quién es."
+      content="El amigo invisible por enlace, sin cuentas: cada uno ve solo a quién le toca y puede preguntarle en secreto qué le haría ilusión, sin que sepa quién es."
     />
-    <!-- Vista previa al compartir el enlace (WhatsApp lee estas etiquetas; es la misma para todos los grupos). -->
-    <meta property="og:title" content="psst · amigo invisible" />
+    <link rel="canonical" href="https://psst.hidan.es/" />
+    <!--
+      Vista previa al compartir el enlace (WhatsApp, Telegram, iMessage, X…). Sus rastreadores no
+      ejecutan JavaScript, así que las etiquetas tienen que estar aquí, en el HTML estático.
+      Es la misma vista previa para todos los grupos: el nombre del grupo no sale en ella
+      a propósito, porque el enlace se reenvía y la vista previa se guarda en cachés ajenas.
+      og-image.png: 1200×630, con URL absoluta (WhatsApp no resuelve rutas relativas).
+      Si se cambia la imagen, cambiarle también el nombre: WhatsApp la cachea por URL.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="psst" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://psst.hidan.es/" />
+    <meta property="og:title" content="psst · el amigo invisible con chat secreto" />
     <meta
       property="og:description"
+      content="Te han invitado a un amigo invisible. Entra con tu nombre y un PIN, y pregúntale en secreto a tu persona sin que sepa quién eres."
+    />
+    <meta property="og:image" content="https://psst.hidan.es/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Una celosía con la luz sobre un nombre: «pregúntale lo que quieras, sin que sepa que eres tú»."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="psst · el amigo invisible con chat secreto" />
+    <meta
+      name="twitter:description"
       content="Te han invitado a un amigo invisible. Entra con tu nombre y un PIN."
     />
-    <meta property="og:type" content="website" />
+    <meta name="twitter:image" content="https://psst.hidan.es/og-image.png" />
   </head>
   <body>
     <div id="root"></div>
