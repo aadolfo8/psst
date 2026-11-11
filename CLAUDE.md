@@ -32,7 +32,8 @@
 - [x] Fase 6: PWA y push (código y tests; falta probar la push en Android e iPhone
   con HTTPS).
 - [x] Fase 7: modo demo y pulido (falta que alguien ajeno lo pruebe).
-- [ ] Fase 8: ver el plan más abajo.
+- [x] Fase 8: README y ficheros de despliegue en `deploy/` (probados en local con
+  Docker). Falta desplegar en el VPS, grabar los GIFs y probar las push en móvil.
 
 ---
 
@@ -213,7 +214,9 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
    `demo = true` se cambia de persona sin PIN y se borran pasado un día.
 8. Despliegue y README.
    Verificable: funciona por HTTPS en el subdominio y el README está completo.
-   Commit: "docs: README and deploy"
+   Commit: "docs: README and deploy". HECHA en el repo (pendiente el despliegue real).
+   `deploy/`: docker-compose.yml (caddy, api, db), Caddyfile y web.Dockerfile (compila
+   la web y la sirve con Caddy); `apps/api/Dockerfile` aplica migraciones al arrancar.
 
 ## Criterios de terminado
 - Desplegado en el VPS con HTTPS y la demo accesible desde la página de inicio.

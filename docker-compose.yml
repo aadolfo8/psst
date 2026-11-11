@@ -1,4 +1,4 @@
-# Entorno de desarrollo: solo Postgres. El despliegue en el VPS se define en la fase 8.
+# Entorno de desarrollo: solo Postgres. El de producción está en deploy/docker-compose.yml.
 services:
   db:
     image: postgres:16-alpine

@@ -1,0 +1,32 @@
+# Caddy pide y renueva solo el certificado HTTPS del dominio (Let's Encrypt).
+# HTTPS es obligatorio: sin él no hay service worker ni notificaciones push.
+{$PSST_DOMAIN} {
+	encode zstd gzip
+
+	# La API, también los websockets (Caddy los reenvía sin configurar nada más).
+	# handle_path quita el prefijo: /api/groups/... llega a FastAPI como /groups/...
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+
+		# El service worker y el manifest nunca en caché: así las versiones nuevas llegan.
+		@fresh path /sw.js /manifest.webmanifest /index.html
+		header @fresh Cache-Control "no-cache"
+		# Los ficheros de assets/ llevan un hash en el nombre: se pueden cachear para siempre.
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+
+		# Rutas de la SPA (/g/abc/chat…): si no es un fichero, index.html.
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
