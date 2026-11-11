@@ -316,6 +316,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/guess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Guess */
+        get: operations["get_guess_groups__slug__guess_get"];
+        /**
+         * Put Guess
+         * @description Apuesta (o cambia la apuesta) por quién te regala.
+         */
+        put: operations["put_guess_groups__slug__guess_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/unmask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unmask
+         * @description Quita las celosías. Irreversible: por eso hay que escribir la frase de confirmación
+         *     (la comprueba `UnmaskRequest`). Avisa a todos, por websocket o por push.
+         */
+        post: operations["unmask_groups__slug__unmask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{slug}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Results
+         * @description Quién regalaba a quién y quién acertó. Solo después de quitar las celosías.
+         */
+        get: operations["get_results_groups__slug__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/demo": {
         parameters: {
             query?: never;
@@ -413,6 +475,8 @@ export interface components {
             role: "giver" | "receiver";
             /** Messages */
             messages: components["schemas"]["MessageOut"][];
+            /** Giver Name */
+            giver_name?: string | null;
         };
         /** DemoSwitch */
         DemoSwitch: {
@@ -478,6 +542,8 @@ export interface components {
              * @default false
              */
             demo: boolean;
+            /** Unmasked At */
+            unmasked_at?: string | null;
         };
         /** GroupStatusUpdate */
         GroupStatusUpdate: {
@@ -486,6 +552,25 @@ export interface components {
              * @enum {string}
              */
             status: "open" | "closed";
+        };
+        /**
+         * GuessStatus
+         * @description Tu apuesta y cuántas personas han apostado ya. Nunca quiénes ni por quién.
+         */
+        GuessStatus: {
+            guessed: components["schemas"]["ParticipantRef"] | null;
+            /** Guessers */
+            guessers: number;
+            /** Participants */
+            participants: number;
+        };
+        /** GuessUpdate */
+        GuessUpdate: {
+            /**
+             * Guessed Id
+             * Format: uuid
+             */
+            guessed_id: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -595,6 +680,26 @@ export interface components {
             keys: components["schemas"]["PushKeys"];
         };
         /**
+         * ResultPair
+         * @description Una pareja del sorteo y la apuesta de quien recibía.
+         */
+        ResultPair: {
+            giver: components["schemas"]["ParticipantRef"];
+            receiver: components["schemas"]["ParticipantRef"];
+            receiver_guess: components["schemas"]["ParticipantRef"] | null;
+            /** Guessed Right */
+            guessed_right: boolean;
+        };
+        /**
+         * Results
+         * @description La cadena completa, en el orden en que se regala: cada pareja empieza por quien
+         *     recibía en la anterior (salvo cuando el sorteo forma varios círculos).
+         */
+        Results: {
+            /** Pairs */
+            pairs: components["schemas"]["ResultPair"][];
+        };
+        /**
          * Reveal
          * @description Lo que ve quien regala. Nunca incluye nada de quien le regala a él.
          */
@@ -612,6 +717,11 @@ export interface components {
             name: string;
             /** Wishlist */
             wishlist: string;
+        };
+        /** UnmaskRequest */
+        UnmaskRequest: {
+            /** Confirm */
+            confirm: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1267,6 +1377,138 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_guess_groups__slug__guess_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuessStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_guess_groups__slug__guess_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuessUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuessStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmask_groups__slug__unmask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnmaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_results_groups__slug__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Results"];
+                };
             };
             /** @description Validation Error */
             422: {

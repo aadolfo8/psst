@@ -934,6 +934,195 @@
         }
       }
     },
+    "/groups/{slug}/guess": {
+      "get": {
+        "tags": [
+          "unmask"
+        ],
+        "summary": "Get Guess",
+        "operationId": "get_guess_groups__slug__guess_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuessStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "unmask"
+        ],
+        "summary": "Put Guess",
+        "description": "Apuesta (o cambia la apuesta) por quién te regala.",
+        "operationId": "put_guess_groups__slug__guess_put",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuessUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuessStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/unmask": {
+      "post": {
+        "tags": [
+          "unmask"
+        ],
+        "summary": "Unmask",
+        "description": "Quita las celosías. Irreversible: por eso hay que escribir la frase de confirmación\n(la comprueba `UnmaskRequest`). Avisa a todos, por websocket o por push.",
+        "operationId": "unmask_groups__slug__unmask_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnmaskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/results": {
+      "get": {
+        "tags": [
+          "unmask"
+        ],
+        "summary": "Get Results",
+        "description": "Quién regalaba a quién y quién acertó. Solo después de quitar las celosías.",
+        "operationId": "get_results_groups__slug__results_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Results"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/demo": {
       "post": {
         "tags": [
@@ -1091,6 +1280,17 @@
             },
             "type": "array",
             "title": "Messages"
+          },
+          "giver_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Giver Name"
           }
         },
         "type": "object",
@@ -1257,6 +1457,18 @@
             "type": "boolean",
             "title": "Demo",
             "default": false
+          },
+          "unmasked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unmasked At"
           }
         },
         "type": "object",
@@ -1285,6 +1497,50 @@
           "status"
         ],
         "title": "GroupStatusUpdate"
+      },
+      "GuessStatus": {
+        "properties": {
+          "guessed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParticipantRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guessers": {
+            "type": "integer",
+            "title": "Guessers"
+          },
+          "participants": {
+            "type": "integer",
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "guessed",
+          "guessers",
+          "participants"
+        ],
+        "title": "GuessStatus",
+        "description": "Tu apuesta y cuántas personas han apostado ya. Nunca quiénes ni por quién."
+      },
+      "GuessUpdate": {
+        "properties": {
+          "guessed_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Guessed Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "guessed_id"
+        ],
+        "title": "GuessUpdate"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1520,6 +1776,56 @@
         "title": "PushSubscriptionIn",
         "description": "Lo que devuelve `pushManager.subscribe()` en el navegador (PushSubscription.toJSON)."
       },
+      "ResultPair": {
+        "properties": {
+          "giver": {
+            "$ref": "#/components/schemas/ParticipantRef"
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/ParticipantRef"
+          },
+          "receiver_guess": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParticipantRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guessed_right": {
+            "type": "boolean",
+            "title": "Guessed Right"
+          }
+        },
+        "type": "object",
+        "required": [
+          "giver",
+          "receiver",
+          "receiver_guess",
+          "guessed_right"
+        ],
+        "title": "ResultPair",
+        "description": "Una pareja del sorteo y la apuesta de quien recibía."
+      },
+      "Results": {
+        "properties": {
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/ResultPair"
+            },
+            "type": "array",
+            "title": "Pairs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pairs"
+        ],
+        "title": "Results",
+        "description": "La cadena completa, en el orden en que se regala: cada pareja empieza por quien\nrecibía en la anterior (salvo cuando el sorteo forma varios círculos)."
+      },
       "Reveal": {
         "properties": {
           "receiver": {
@@ -1556,6 +1862,19 @@
           "wishlist"
         ],
         "title": "RevealedReceiver"
+      },
+      "UnmaskRequest": {
+        "properties": {
+          "confirm": {
+            "type": "string",
+            "title": "Confirm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "confirm"
+        ],
+        "title": "UnmaskRequest"
       },
       "ValidationError": {
         "properties": {

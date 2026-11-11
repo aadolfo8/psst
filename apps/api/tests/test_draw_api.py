@@ -86,7 +86,15 @@ async def test_draw_saves_assignments_without_revealing_them(group, db: AsyncSes
 
     assert response.status_code == 200
     # La respuesta es solo la info pública del grupo: el organizador no ve a quién toca nadie.
-    assert set(response.json()) == {"slug", "name", "budget", "exchange_date", "status", "demo"}
+    assert set(response.json()) == {
+        "slug",
+        "name",
+        "budget",
+        "exchange_date",
+        "status",
+        "demo",
+        "unmasked_at",
+    }
     assert response.json()["status"] == "drawn"
     assert await count_assignments(db) == 4
 

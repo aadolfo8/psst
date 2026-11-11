@@ -4,9 +4,6 @@ No se habla con ningún servicio de push: se sustituye `webpush` por una funció
 lo que se le pide enviar.
 """
 
-from typing import Any
-
-import pytest
 from httpx import AsyncClient
 from pywebpush import WebPushException
 from sqlalchemy import func, select
@@ -22,22 +19,6 @@ SUBSCRIPTION = {
     "endpoint": "https://push.example/abc",
     "keys": {"p256dh": "clave-p256dh", "auth": "clave-auth"},
 }
-
-
-@pytest.fixture
-def sent(monkeypatch) -> list[dict[str, Any]]:
-    """Activa las push con claves falsas y captura cada envío: (endpoint, payload)."""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "vapid_private_key", "privada")
-    monkeypatch.setattr(settings, "vapid_public_key", "publica")
-
-    calls: list[dict[str, Any]] = []
-
-    def fake_webpush(subscription_info, data, **kwargs):
-        calls.append({"endpoint": subscription_info["endpoint"], "data": data})
-
-    monkeypatch.setattr(push, "webpush", fake_webpush)
-    return calls
 
 
 async def subscribe(client: AsyncClient, slug: str, endpoint: str = SUBSCRIPTION["endpoint"]):

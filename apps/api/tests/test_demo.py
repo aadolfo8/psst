@@ -69,3 +69,18 @@ async def test_old_demo_groups_are_removed(client: AsyncClient, db: AsyncSession
 
     demo_groups = await db.scalar(select(func.count()).select_from(Group).where(Group.demo))
     assert demo_groups == 1
+
+
+async def test_demo_has_guesses_and_lucia_can_unmask(client: AsyncClient) -> None:
+    """Tres apuestas ya hechas (falta la de Lucía) y Lucía, que organiza, puede quitar las
+    celosías para ver el final."""
+    slug = (await client.post("/demo")).json()["group"]["slug"]
+
+    status = (await client.get(f"/groups/{slug}/guess")).json()
+    unmasked = await client.post(f"/groups/{slug}/unmask", json={"confirm": "desenmascarar"})
+    results = (await client.get(f"/groups/{slug}/results")).json()["pairs"]
+
+    assert status == {"guessed": None, "guessers": 3, "participants": 4}
+    assert unmasked.status_code == 200
+    assert [p["giver"]["name"] for p in results] == ["Lucía", "Mario", "Carmen", "Pablo"]
+    assert [p["receiver"]["name"] for p in results if p["guessed_right"]] == ["Mario"]

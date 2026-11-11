@@ -61,6 +61,8 @@ class GroupPublic(BaseModel):
     exchange_date: date | None
     status: Literal["open", "closed", "drawn"]
     demo: bool = False
+    # Cuándo se quitaron las celosías; null mientras sigan puestas.
+    unmasked_at: datetime | None = None
 
 
 class Me(BaseModel):
@@ -149,6 +151,8 @@ class MessageOut(BaseModel):
 class Conversation(BaseModel):
     role: ChatRole
     messages: list[MessageOut]
+    # Solo en el chat con quien te regala y solo cuando ya se han quitado las celosías.
+    giver_name: str | None = None
 
 
 class ChatSummary(BaseModel):
@@ -156,6 +160,52 @@ class ChatSummary(BaseModel):
 
     as_giver: int
     as_receiver: int
+
+
+# --- apuestas y desenmascarado --------------------------------------------------------------
+
+# Lo que hay que escribir para quitar las celosías. Sin tildes, para que nadie se atasque
+# con el teclado del móvil.
+UNMASK_PHRASE = "desenmascarar"
+
+
+class GuessUpdate(BaseModel):
+    guessed_id: uuid.UUID
+
+
+class GuessStatus(BaseModel):
+    """Tu apuesta y cuántas personas han apostado ya. Nunca quiénes ni por quién."""
+
+    guessed: ParticipantRef | None
+    guessers: int
+    participants: int
+
+
+class UnmaskRequest(BaseModel):
+    confirm: str
+
+    @field_validator("confirm")
+    @classmethod
+    def is_the_phrase(cls, value: str) -> str:
+        if " ".join(value.split()).lower() != UNMASK_PHRASE:
+            raise ValueError(f'escribe "{UNMASK_PHRASE}" para confirmar')
+        return value
+
+
+class ResultPair(BaseModel):
+    """Una pareja del sorteo y la apuesta de quien recibía."""
+
+    giver: ParticipantRef
+    receiver: ParticipantRef
+    receiver_guess: ParticipantRef | None
+    guessed_right: bool
+
+
+class Results(BaseModel):
+    """La cadena completa, en el orden en que se regala: cada pareja empieza por quien
+    recibía en la anterior (salvo cuando el sorteo forma varios círculos)."""
+
+    pairs: list[ResultPair]
 
 
 # --- push ----------------------------------------------------------------------------------

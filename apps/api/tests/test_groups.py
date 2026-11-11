@@ -70,6 +70,7 @@ async def test_get_group_returns_public_info(client: AsyncClient, new_client) ->
         "exchange_date": None,
         "status": "open",
         "demo": False,
+        "unmasked_at": None,
     }
 
 

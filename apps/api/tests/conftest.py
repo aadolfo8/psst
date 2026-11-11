@@ -7,6 +7,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import push
+from app.config import get_settings
 from app.db import SessionLocal, engine
 from app.main import app
 from app.models import Assignment
@@ -45,6 +47,22 @@ async def clean_tables() -> AsyncIterator[None]:
     async with engine.begin() as conn:
         # Las demás tablas cuelgan de estas y se vacían en cascada.
         await conn.execute(text("TRUNCATE groups CASCADE"))
+
+
+@pytest.fixture
+def sent(monkeypatch) -> list[dict[str, Any]]:
+    """Activa las push con claves falsas y captura cada envío: (endpoint, payload)."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "vapid_private_key", "privada")
+    monkeypatch.setattr(settings, "vapid_public_key", "publica")
+
+    calls: list[dict[str, Any]] = []
+
+    def fake_webpush(subscription_info, data, **kwargs):
+        calls.append({"endpoint": subscription_info["endpoint"], "data": data})
+
+    monkeypatch.setattr(push, "webpush", fake_webpush)
+    return calls
 
 
 async def create_group(client: AsyncClient, **overrides: Any) -> dict[str, Any]:

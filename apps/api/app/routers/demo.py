@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import delete, func, select
 
 from app.deps import DbSession
-from app.models import Assignment, Group, Message, Participant
+from app.models import Assignment, Group, Guess, Message, Participant
 from app.routers.groups import build_me, open_session, set_session_cookie
 from app.schemas import DemoSwitch, Me
 from app.security import hash_pin, new_slug
@@ -36,6 +36,10 @@ CONVERSATION = [
     ("giver", "eso no se pregunta. ¿más de té o de café?"),
     ("receiver", "café, siempre"),
 ]
+
+# Apuestas ya hechas (quien apuesta, por quién). Mario acierta; Carmen y Pablo fallan; Lucía
+# no ha apostado para que quien prueba la demo lo haga.
+GUESSES = [("Mario", "Lucía"), ("Carmen", "Pablo"), ("Pablo", "Lucía")]
 
 
 @router.post("/demo", status_code=status.HTTP_201_CREATED)
@@ -98,6 +102,12 @@ async def create_demo(response: Response, db: DbSession) -> Me:
             created_at=now + timedelta(seconds=i),
         )
         for i, (role, body) in enumerate(CONVERSATION)
+    )
+
+    by_name = {p.name: p for p in people}
+    db.add_all(
+        Guess(group_id=group.id, guesser_id=by_name[guesser].id, guessed_id=by_name[guessed].id)
+        for guesser, guessed in GUESSES
     )
 
     token = open_session(db, people[0])

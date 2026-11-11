@@ -104,7 +104,15 @@ async def get_conversation(
         .where(Message.assignment_id == assignment.id)
         .order_by(Message.created_at, Message.id)
     )
-    return Conversation(role=role, messages=[to_message_out(m, role) for m in messages])
+    # Con las celosías quitadas, quien recibe ya puede saber quién le regalaba.
+    giver_name = None
+    if role == "receiver" and current.group.unmasked_at is not None:
+        giver = await db.get(Participant, assignment.giver_id)
+        assert giver is not None
+        giver_name = giver.name
+    return Conversation(
+        role=role, messages=[to_message_out(m, role) for m in messages], giver_name=giver_name
+    )
 
 
 @router.post("/{role}/messages", status_code=status.HTTP_201_CREATED)

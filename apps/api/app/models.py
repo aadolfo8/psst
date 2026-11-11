@@ -34,6 +34,8 @@ class Group(Base):
     )
     # Grupo de ejemplo del modo demo: se puede cambiar de persona sin PIN y se borra al día.
     demo: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Cuándo quitó el organizador las celosías: desde entonces todos saben quién les regalaba.
+    unmasked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -136,6 +138,25 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # Cuándo lo leyó la otra persona; null mientras no lo haya leído.
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Guess(Base):
+    """La apuesta de un participante sobre quién le regala. Una por persona; se puede cambiar
+    hasta que se quitan las celosías. Nadie ve las apuestas de los demás hasta entonces."""
+
+    __tablename__ = "guesses"
+    __table_args__ = (
+        CheckConstraint("guesser_id <> guessed_id", name="not_self"),
+        UniqueConstraint("guesser_id", name="uq_guesses_guesser_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("groups.id", ondelete="CASCADE"), index=True
+    )
+    guesser_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("participants.id", ondelete="CASCADE"))
+    guessed_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("participants.id", ondelete="CASCADE"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class PushSubscription(Base):
