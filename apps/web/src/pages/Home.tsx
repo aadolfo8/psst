@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { DateField } from "../components/DateField";
 import { LatticeWindow } from "../components/LatticeWindow";
@@ -13,6 +13,9 @@ export default function Home() {
     <div className={styles.home}>
       <header className={styles.bar}>
         <span className={ui.logo}>psst</span>
+        <Link to="/demo" className={styles.demoLink}>
+          probar la demo
+        </Link>
       </header>
       <LatticeWindow hiddenName="Lucía" />
       <main className={styles.content}>

@@ -81,6 +81,13 @@ export async function revealLoader({ params }: LoaderFunctionArgs) {
   return { me, receiver: revealed.receiver };
 }
 
+/** /demo: crea un grupo de ejemplo, entra como Lucía y lleva a su sala. */
+export async function demoLoader() {
+  const { data, response } = await api.POST("/demo");
+  if (!data) throw loadFailed(response.status);
+  return redirect(`/g/${data.group.slug}`);
+}
+
 /**
  * Chat. Siempre está la conversación con quien te regala; la de a quien regalas solo si ya
  * has abierto la celosía (hasta entonces el nombre no debe aparecer en esta pantalla).

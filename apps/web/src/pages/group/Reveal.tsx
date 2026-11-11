@@ -5,6 +5,7 @@ import { api, errorMessage, type RevealedReceiver } from "../../lib/api/client";
 import { groupDetails } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
 import type { revealLoader } from "../loaders";
+import DemoBar from "./DemoBar";
 import r from "./reveal.module.css";
 
 /**
@@ -45,6 +46,7 @@ export default function Reveal() {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
+      {group.demo && <DemoBar me={me} />}
       <h1 className={ui.title}>te toca regalar a</h1>
 
       <div className={windowClass}>

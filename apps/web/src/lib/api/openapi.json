@@ -934,6 +934,81 @@
         }
       }
     },
+    "/demo": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Create Demo",
+        "description": "Crea el grupo de ejemplo y abre sesión como Lucía.",
+        "operationId": "create_demo_demo_post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{slug}/demo/switch": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Switch Person",
+        "description": "Entra como otra persona del grupo demo, sin PIN. Solo en grupos demo.",
+        "operationId": "switch_person_groups__slug__demo_switch_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoSwitch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -1024,6 +1099,21 @@
           "messages"
         ],
         "title": "Conversation"
+      },
+      "DemoSwitch": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "DemoSwitch"
       },
       "ExclusionCreate": {
         "properties": {
@@ -1162,6 +1252,11 @@
               "drawn"
             ],
             "title": "Status"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
           }
         },
         "type": "object",

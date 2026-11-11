@@ -4,6 +4,7 @@ import type { ExclusionOut, GroupPublic, Me, ParticipantPublic } from "../../lib
 import { usePolling } from "../../lib/usePolling";
 import ui from "../../styles/ui.module.css";
 import AdminPanel from "./AdminPanel";
+import DemoBar from "./DemoBar";
 import g from "./group.module.css";
 import GroupHeader from "./GroupHeader";
 import Wishlist from "./Wishlist";
@@ -35,6 +36,7 @@ export default function Lobby({ me, participants, exclusions, unread }: Props) {
       <Link to="/" className={ui.logo}>
         psst
       </Link>
+      {group.demo && <DemoBar me={me} />}
       <GroupHeader group={group} />
       <Steps status={group.status} />
 

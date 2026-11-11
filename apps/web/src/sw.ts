@@ -16,7 +16,11 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 // Cualquier ruta de la SPA (/g/abc/chat…) se sirve con el index.html cacheado.
-registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html"), { denylist: [/^\/api\//] }));
+// En desarrollo no hay precaché (Vite sirve todo al vuelo), así que esta ruta no existe.
+if (!import.meta.env.DEV) {
+  const appShell = createHandlerBoundToURL("/index.html");
+  registerRoute(new NavigationRoute(appShell, { denylist: [/^\/api\//] }));
+}
 
 // Una versión nueva del service worker toma el control sin esperar a cerrar todas las pestañas.
 self.addEventListener("install", () => self.skipWaiting());

@@ -31,7 +31,8 @@
 - [x] Fase 5: tiempo real con websockets (mensajes, "escribiendo…" y "leído").
 - [x] Fase 6: PWA y push (código y tests; falta probar la push en Android e iPhone
   con HTTPS).
-- [ ] Fase 7 en adelante: ver el plan más abajo.
+- [x] Fase 7: modo demo y pulido (falta que alguien ajeno lo pruebe).
+- [ ] Fase 8: ver el plan más abajo.
 
 ---
 
@@ -206,7 +207,10 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
    Commit: "feat: PWA and web push". HECHA (pendiente la prueba en móvil con HTTPS).
 7. Pulido visual y modo demo.
    Verificable: alguien ajeno lo entiende y lo prueba en menos de un minuto.
-   Commit: "feat: visual polish and demo mode"
+   Commit: "feat: visual polish and demo mode". HECHA (pendiente la prueba con
+   alguien ajeno). La demo (`POST /demo`) crea un grupo propio por visita, ya sorteado,
+   con cuatro personas y una conversación empezada entre Lucía y Mario; en grupos con
+   `demo = true` se cambia de persona sin PIN y se borran pasado un día.
 8. Despliegue y README.
    Verificable: funciona por HTTPS en el subdominio y el README está completo.
    Commit: "docs: README and deploy"

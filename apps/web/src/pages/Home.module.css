@@ -6,6 +6,23 @@
   max-width: 1040px;
   margin: 0 auto;
   padding: var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.demoLink {
+  padding: 8px 16px;
+  border-radius: var(--radio-pildora);
+  box-shadow: inset 0 0 0 1.5px var(--linea);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.demoLink:hover {
+  color: var(--cal);
+  box-shadow: inset 0 0 0 1.5px var(--cal);
 }
 
 .content {

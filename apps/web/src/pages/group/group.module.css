@@ -69,6 +69,62 @@
   font-weight: 500;
 }
 
+/* ---------- Modo demo ---------- */
+
+.demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--sombra);
+  font-size: 14px;
+  color: var(--cal-2);
+}
+
+.demoLabel {
+  padding: 3px 9px;
+  border-radius: var(--radio-pildora);
+  background: var(--albero);
+  color: var(--sombra);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.demoText strong {
+  color: var(--cal);
+  font-weight: 600;
+}
+
+.demoPeople {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demoPerson {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radio-pildora);
+  background: var(--anil-2);
+  color: var(--cal);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.demoPerson:hover {
+  background: var(--cal);
+  color: var(--sombra);
+}
+
+.demoPerson:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ---------- Fases del grupo ---------- */
 
 .steps {

@@ -69,6 +69,7 @@ async def test_get_group_returns_public_info(client: AsyncClient, new_client) ->
         "budget": 30,
         "exchange_date": None,
         "status": "open",
+        "demo": False,
     }
 
 

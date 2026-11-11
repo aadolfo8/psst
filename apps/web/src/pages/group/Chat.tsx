@@ -5,6 +5,7 @@ import { api, errorMessage, type ChatRole, type MessageOut } from "../../lib/api
 import { useChatSocket, type ChatEvent } from "../../lib/useChatSocket";
 import ui from "../../styles/ui.module.css";
 import c from "./chat.module.css";
+import DemoBar from "./DemoBar";
 import PushPrompt from "./PushPrompt";
 import type { chatLoader } from "../loaders";
 
@@ -26,6 +27,11 @@ function unreadCount(messages: MessageOut[] | null): number {
  */
 export default function Chat() {
   const data = useLoaderData<typeof chatLoader>();
+  // key: si en la demo cambias de persona, la pantalla empieza de cero (estado y socket).
+  return <ChatScreen key={data.me.id} data={data} />;
+}
+
+function ChatScreen({ data }: { data: Awaited<ReturnType<typeof chatLoader>> }) {
   const { me, receiverName } = data;
   const slug = me.group.slug;
   const [tab, setTab] = useState<ChatRole>("receiver");
@@ -91,6 +97,7 @@ export default function Chat() {
         <Link to={`/g/${slug}`} className={ui.logo}>
           psst
         </Link>
+        {me.group.demo && <DemoBar me={me} />}
         <div className={c.tabs} role="tablist">
           <Tab
             role="receiver"

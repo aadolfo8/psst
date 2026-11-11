@@ -60,6 +60,7 @@ class GroupPublic(BaseModel):
     budget: int | None
     exchange_date: date | None
     status: Literal["open", "closed", "drawn"]
+    demo: bool = False
 
 
 class Me(BaseModel):
@@ -174,3 +175,7 @@ class PushSubscriptionIn(BaseModel):
 
 class PushPublicKey(BaseModel):
     public_key: str
+
+
+class DemoSwitch(BaseModel):
+    name: ParticipantName
