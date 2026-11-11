@@ -8,6 +8,10 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
+  /* Las hojas de celosía del revelado giran hacia fuera y se salen por los lados: sin esto
+     la página tendría scroll horizontal en el móvil. clip, y no hidden, para no crear un
+     contenedor con scroll propio. */
+  overflow-x: clip;
 }
 
 /* Friso de celosía a todo lo ancho en lo alto de cada pantalla interior. */

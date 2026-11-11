@@ -75,7 +75,8 @@
   word-spacing: 0.08em;
 }
 
-.who span {
+/* Solo el subtítulo (dentro del bloque de texto), no los avatares, que también son span. */
+.who div span {
   font-size: 13.5px;
   color: var(--cal-2);
 }
