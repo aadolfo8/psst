@@ -16,6 +16,10 @@ __pycache__/
 .env
 .env.*
 !.env.example
+!.env.production.example
+
+# Despliegue: último commit desplegado con éxito en el VPS
+.deployed-sha
 
 # Sistema
 .DS_Store

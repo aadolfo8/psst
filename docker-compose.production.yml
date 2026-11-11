@@ -1,0 +1,80 @@
+# Producción en el VPS (/srv/psst). No publica puertos: el Caddy compartido del VPS
+# saca el HTTPS y llega a `web` por la red externa `proxy` con el alias psst-web.
+# Las imágenes se construyen en GitHub Actions y se publican en ghcr.io con el SHA del
+# commit como tag; el workflow de despliegue exporta PSST_IMAGE_TAG antes de cada comando.
+#
+# Alias únicos (psst-*) en todas las redes: en `proxy` hay otras apps, y un `api` a secas
+# podría resolver a la API de otra.
+name: psst
+
+services:
+  web:
+    image: ghcr.io/aadolfo8/psst-web:${PSST_IMAGE_TAG:?PSST_IMAGE_TAG es obligatorio (el SHA desplegado)}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      app:
+        aliases: [psst-web]
+      proxy:
+        aliases: [psst-web]
+
+  api:
+    image: ghcr.io/aadolfo8/psst-api:${PSST_IMAGE_TAG:?PSST_IMAGE_TAG es obligatorio (el SHA desplegado)}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PSST_DATABASE_URL: postgresql+asyncpg://psst:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD es obligatorio}@psst-db:5432/psst
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # /health/db comprueba también la conexión con Postgres.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/db', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      app:
+        aliases: [psst-api]
+
+  db:
+    image: postgres:16.15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: psst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD es obligatorio}
+      POSTGRES_DB: psst
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psst -d psst"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      app:
+        aliases: [psst-db]
+
+networks:
+  # Red privada de la app: solo web, api y db.
+  app: {}
+  # Red del Caddy compartido; la crea /srv/proxy.
+  proxy:
+    external: true
+
+volumes:
+  pgdata:
