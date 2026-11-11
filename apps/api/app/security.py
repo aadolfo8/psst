@@ -47,6 +47,9 @@ def new_slug() -> str:
     return "".join(secrets.choice(SLUG_ALPHABET) for _ in range(SLUG_LENGTH))
 
 
+SESSION_COOKIE_PREFIX = "psst_"
+
+
 def session_cookie_name(slug: str) -> str:
     # Una cookie por grupo: se puede estar en varios grupos desde el mismo navegador.
-    return f"psst_{slug}"
+    return f"{SESSION_COOKIE_PREFIX}{slug}"

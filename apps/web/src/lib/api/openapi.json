@@ -332,6 +332,32 @@
         }
       }
     },
+    "/me/groups": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "My Groups",
+        "description": "Los grupos en los que este navegador tiene sesión, de más nuevo a más antiguo.\n\nSirve para que la app instalada, que arranca en `/`, sepa a qué grupo llevarte: la cookie\nes httpOnly y desde JavaScript no se puede leer. Solo se mira lo que manda el propio\nnavegador, así que nunca devuelve grupos de otra persona.",
+        "operationId": "my_groups_me_groups_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GroupPublic"
+                  },
+                  "type": "array",
+                  "title": "Response My Groups Me Groups Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{slug}/me/wishlist": {
       "put": {
         "tags": [
