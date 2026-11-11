@@ -4,6 +4,8 @@ const ua = navigator.userAgent;
 
 export const isIOS = /iPhone|iPad|iPod/.test(ua);
 
+export const isAndroid = /Android/.test(ua);
+
 /** Abierta desde la pantalla de inicio (PWA instalada), no desde una pestaña del navegador. */
 export const isInstalled =
   window.matchMedia("(display-mode: standalone)").matches ||

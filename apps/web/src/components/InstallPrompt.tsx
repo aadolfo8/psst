@@ -17,7 +17,7 @@ export default function InstallPrompt() {
   const [dismissed, setDismissed] = useState(() => remembered());
   const [showSteps, setShowSteps] = useState(false);
 
-  if (dismissed || (mode !== "prompt" && mode !== "ios")) return null;
+  if (dismissed || mode === "installed" || mode === "unavailable") return null;
 
   function dismiss() {
     remember();
@@ -38,6 +38,12 @@ export default function InstallPrompt() {
             : ""}
           Toca compartir
           <ShareIcon />y luego «añadir a pantalla de inicio». Ábrelo desde ahí.
+        </p>
+      )}
+      {mode === "manual" && showSteps && (
+        <p>
+          Abre el menú del navegador (los tres puntos) y toca «instalar aplicación» o «añadir a
+          pantalla de inicio». Ábrelo desde ahí.
         </p>
       )}
 

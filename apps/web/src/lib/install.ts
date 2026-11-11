@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { isInstalled, isIOS } from "./platform";
+import { isAndroid, isInstalled, isIOS } from "./platform";
 
 /**
  * Instalar la web como app. En Android (Chrome) el navegador avisa con el evento
@@ -12,7 +12,8 @@ export type InstallMode =
   | "installed" // ya está instalada y abierta como app: no hay nada que ofrecer
   | "prompt" // Android/Chrome: un botón abre el diálogo de instalación
   | "ios" // iPhone/iPad: hay que añadirla a la pantalla de inicio a mano
-  | "unavailable"; // el navegador no la ofrece (o todavía no)
+  | "manual" // Android sin evento (lo descartaste antes, ya estaba instalada…): desde el menú
+  | "unavailable"; // escritorio u otro navegador que no la ofrece
 
 type BeforeInstallPromptEvent = Event & {
   prompt(): Promise<void>;
@@ -45,6 +46,8 @@ export function getInstallMode(): InstallMode {
   if (installed) return "installed";
   if (deferred) return "prompt";
   if (isIOS) return "ios";
+  // Chrome deja de lanzar el evento si descartaste el diálogo antes: el menú sigue funcionando.
+  if (isAndroid) return "manual";
   return "unavailable";
 }
 
