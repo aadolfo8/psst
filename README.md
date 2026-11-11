@@ -1,14 +1,25 @@
 <div align="center">
 
-<img src="apps/web/public/favicon.svg" width="88" alt="">
+<img src="docs/readme/hero.svg" alt="psst: el amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe" width="100%">
 
-# psst
+<br>
 
-**El amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe.**
+[![CI](https://github.com/aadolfo8/psst/actions/workflows/ci.yml/badge.svg)](https://github.com/aadolfo8/psst/actions/workflows/ci.yml)
+![React 19](https://img.shields.io/badge/React-19-1D2A8C?style=flat-square&logo=react&logoColor=F0B43A)
+![Vite](https://img.shields.io/badge/Vite-8-1D2A8C?style=flat-square&logo=vite&logoColor=F0B43A)
+![FastAPI](https://img.shields.io/badge/FastAPI-async-1D2A8C?style=flat-square&logo=fastapi&logoColor=F0B43A)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-1D2A8C?style=flat-square&logo=postgresql&logoColor=F0B43A)
+![PWA](https://img.shields.io/badge/PWA-web_push-1D2A8C?style=flat-square&logo=pwa&logoColor=F0B43A)
 
-Sin cuentas, sin email, sin teléfono: un enlace por WhatsApp, un nombre y un PIN.
+**sin cuentas · sin email · sin teléfono**<br>
+un enlace por WhatsApp, un nombre y un PIN de 4 cifras.
 
-`React 19` · `Vite` · `FastAPI` · `PostgreSQL` · `WebSockets` · `Web Push` · `PWA`
+[por qué existe](#por-qué-existe) ·
+[cómo funciona](#cómo-funciona) ·
+[el anonimato](#el-anonimato) ·
+[decisiones técnicas](#decisiones-técnicas) ·
+[arrancarlo](#arrancarlo) ·
+[la IA](#cómo-se-usó-la-ia)
 
 </div>
 
@@ -18,7 +29,7 @@ Sin cuentas, sin email, sin teléfono: un enlace por WhatsApp, un nombre y un PI
   ![El chat anónimo visto desde los dos lados](docs/chat.gif)
 -->
 
----
+<br>
 
 ## Por qué existe
 
@@ -30,20 +41,57 @@ qué talla usa tu amigo invisible, se lo cuenta, y adiós secreto.
 psst añade lo que faltaba: un **chat anónimo** entre quien regala y quien recibe.
 Quien regala pregunta lo que quiera; quien recibe contesta sin saber a quién.
 
+> [!TIP]
+> En la página de inicio, **«probar la demo»** crea un grupo de ejemplo ya sorteado y
+> te deja cambiar de persona para ver el anonimato desde los dos lados. Menos de un minuto.
+
 ## Cómo funciona
+
+<img src="docs/readme/pasos.svg" alt="Seis pasos: crea el grupo, comparte por WhatsApp, únete con nombre y PIN, sorteo con exclusiones, abre la celosía y pregunta en secreto" width="100%">
 
 1. **Creas el grupo** con nombre, presupuesto y fecha. Tú también participas.
 2. **Compartes el enlace** por WhatsApp con el mensaje ya redactado.
-3. **Cada persona se une** con su nombre y un PIN de 4 cifras, que le sirve para
-   volver a entrar desde otro móvil.
+3. **Cada persona se une** con su nombre y un PIN, que le sirve para volver a entrar
+   desde otro móvil.
 4. Cada uno escribe su **lista de deseos**. El organizador añade **exclusiones**
    (parejas que no pueden tocarse), cierra las inscripciones y **hace el sorteo**.
 5. Cada uno **abre su celosía**: ve a quién le regala y su lista de deseos.
 6. **Chat secreto** con dos pestañas: «quien te regala» (anónimo) y «a quien regalas».
    Mensajes en vivo, «escribiendo…», «leído» y avisos push cuando no tienes la app abierta.
 
-> ¿Prisa? En la página de inicio, **«probar la demo»** crea un grupo de ejemplo ya
-> sorteado y te deja cambiar de persona para ver el anonimato desde los dos lados.
+## El anonimato
+
+<img src="docs/readme/chat.svg" alt="La misma conversación vista por Lucía, que regala y ve el nombre de Mario, y por Mario, que solo ve a «tu amigo invisible»" width="100%">
+
+<table>
+<tr>
+<th width="50%">cómo se garantiza</th>
+<th width="50%">sus límites, con honestidad</th>
+</tr>
+<tr valign="top">
+<td>
+
+- Los mensajes no guardan quién los envía, solo su papel (`giver` o `receiver`).
+  No hay un `sender_id` que se pueda filtrar por error.
+- La API devuelve cada mensaje con `mine: true/false` en lugar de un remitente.
+- Los eventos del websocket y el texto de las push no llevan ids ni nombres.
+- Hay tests que recorren, en bruto, las respuestas REST y los eventos del websocket
+  que recibe quien recibe y comprueban que no aparece nadie más del grupo. Otro
+  comprueba que los avisos push no llevan nombres.
+
+</td>
+<td>
+
+- **La forma de escribir delata.** Si tu hermano siempre escribe «jajajjaj», lo vas a
+  reconocer. El «modo disfraz» con IA que reescribe en tono neutro queda para después.
+- **En grupos pequeños se deduce.** Con tres personas, quien te regala es una de dos.
+- **Las horas cuentan.** Si te escriben justo cuando alguien deja el móvil en la mesa…
+- **Quien administra el servidor puede ver la base de datos**, como en cualquier
+  servicio. La app no lo oculta a nivel criptográfico; lo oculta a todos los demás.
+
+</td>
+</tr>
+</table>
 
 ## Arquitectura
 
@@ -91,27 +139,6 @@ flowchart LR
 | **Sorteo por backtracking** | Aleatorio, sin autoasignaciones y respetando exclusiones simétricas. Si no hay solución, explica por qué («Ana no puede regalar a nadie con estas exclusiones»). Probado con tests de propiedades (Hypothesis). |
 | **Tipos generados del OpenAPI** | El cliente TypeScript sale del esquema de FastAPI. Si la API cambia, la web no compila, y la CI comprueba que están al día. |
 
-## El anonimato
-
-**Cómo se garantiza:**
-
-- Los mensajes no guardan quién los envía, solo su papel en la conversación
-  (`giver` o `receiver`). No hay un `sender_id` que se pueda filtrar por error.
-- La API devuelve cada mensaje con `mine: true/false` en lugar de un remitente.
-- Los eventos del websocket y el texto de las push no llevan ids ni nombres.
-- Hay tests que recorren, en bruto, las respuestas REST y los eventos del websocket que
-  recibe quien recibe y comprueban que no aparece nadie más del grupo. Otro comprueba
-  que los avisos push no llevan nombres.
-
-**Sus límites, con honestidad:**
-
-- **La forma de escribir delata.** Si tu hermano siempre escribe «jajajjaj», lo vas a
-  reconocer. El «modo disfraz» con IA que reescribe en tono neutro queda para después.
-- **En grupos pequeños se deduce.** Con tres personas, quien te regala es una de dos.
-- **Las horas cuentan.** Si te escriben justo cuando alguien deja el móvil en la mesa…
-- **Quien administra el servidor puede ver la base de datos**, como en cualquier
-  servicio. La app no lo oculta a nivel criptográfico; lo oculta a todos los demás.
-
 ## Seguridad
 
 - Sesión en cookie `httpOnly`, `SameSite=Lax` y `Secure` en producción, una por grupo.
@@ -139,7 +166,10 @@ apps/
 deploy/                Compose de producción, Caddyfile e imagen de la web
 ```
 
-## Desarrollo local
+## Arrancarlo
+
+<details>
+<summary><b>desarrollo local</b></summary>
 
 Requisitos: Node 22 con pnpm, [uv](https://docs.astral.sh/uv/) y Docker.
 
@@ -165,7 +195,10 @@ escritorio permite push en `localhost` sin HTTPS.
 
 Si cambias la API, regenera los tipos de la web con `pnpm gen:api`.
 
-## Tests
+</details>
+
+<details>
+<summary><b>tests y CI</b></summary>
 
 ```bash
 cd apps/api && uv run ruff check . && uv run ruff format --check . && uv run pytest
@@ -176,7 +209,10 @@ Los tests de la API usan la base de datos de desarrollo y **la vacían** al term
 cada test. La CI de GitHub Actions ejecuta todo lo anterior, comprueba que las
 migraciones están al día y que los tipos de la web corresponden a la API.
 
-## Despliegue
+</details>
+
+<details>
+<summary><b>despliegue en un VPS</b></summary>
 
 En un VPS con Docker y un subdominio apuntando a su IP:
 
@@ -209,6 +245,8 @@ Copia de seguridad de la base de datos:
 docker compose exec db pg_dump -U psst psst > psst-$(date +%F).sql
 ```
 
+</details>
+
 ## Cómo se usó la IA
 
 El proyecto se construyó con [Claude Code](https://claude.com/claude-code) como
@@ -231,3 +269,10 @@ compañero de programación, con estas reglas:
 
 <!-- Pendiente: notas del primer grupo real antes de Navidad. -->
 Pendiente.
+
+---
+
+<div align="center">
+<img src="apps/web/public/favicon.svg" width="36" alt=""><br>
+<sub>añil, cal y albero</sub>
+</div>
