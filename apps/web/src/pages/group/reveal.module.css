@@ -63,17 +63,19 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Cada hoja lleva su animación completa, con el nombre dentro del shorthand: si se
+     separa en un shorthand sin nombre + animation-name, el minificador del build lo
+     deja en `animation: none` y las hojas no se abren en producción. */
   .opening .leaf {
     visibility: visible;
-    animation: 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
   }
 
   .opening .left {
-    animation-name: open-left;
+    animation: open-left 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
   }
 
   .opening .right {
-    animation-name: open-right;
+    animation: open-right 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
   }
 
   .opening .name {

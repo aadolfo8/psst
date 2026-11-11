@@ -152,17 +152,18 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* El nombre de la animación va dentro del shorthand: sin él, el minificador lo deja
+     en `animation: none` y las hojas no se abren en producción. */
   .opening .leaf {
     visibility: visible;
-    animation: 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) 0.3s forwards;
   }
 
   .opening .leafLeft {
-    animation-name: open-left;
+    animation: open-left 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) 0.3s forwards;
   }
 
   .opening .leafRight {
-    animation-name: open-right;
+    animation: open-right 1.25s cubic-bezier(0.6, 0.05, 0.2, 1) 0.3s forwards;
   }
 }
 
