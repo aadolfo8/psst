@@ -260,7 +260,7 @@ pasa, `deploy-production.yml`:
 ```bash
 sudo install -d -o deploy -g deploy /srv/psst
 
-# Clave para que el VPS lea el repo (privado)
+# Clave de solo lectura para que el VPS clone el repo (también sirve si el repo es privado)
 ssh-keygen -t ed25519 -N "" -C "psst VPS deploy key" -f ~/.ssh/psst_deploy_key
 cat ~/.ssh/psst_deploy_key.pub
 # → GitHub: repo → Settings → Deploy keys → Add deploy key, SIN "Allow write access"

@@ -150,7 +150,7 @@ jobs:
           env_path=$(printf '%q' "$VPS_DEPLOY_PATH/.env")
           printf '%s' "$VPS_ENV_FILE" | base64 | ssh vps "umask 077; base64 -d > $env_path"
 
-      # El repo es privado y sus imágenes también. El VPS se autentica con el GITHUB_TOKEN
+      # Las imágenes de ghcr.io son privadas aunque el repo sea público. El VPS se autentica con el GITHUB_TOKEN
       # de este job, que caduca al terminar; además se cierra la sesión en el último paso.
       - name: Log the VPS in to ghcr.io
         if: steps.check.outputs.decision == 'deploy'
