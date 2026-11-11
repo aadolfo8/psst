@@ -1,5 +1,6 @@
 import { Link, useRevalidator } from "react-router";
 
+import InstallPrompt from "../../components/InstallPrompt";
 import type {
   ExclusionOut,
   GroupPublic,
@@ -51,6 +52,7 @@ export default function Lobby({ me, participants, exclusions, unread, guess }: P
       {group.demo && <DemoBar me={me} />}
       <GroupHeader group={group} />
       <Steps phase={unmasked ? "unmasked" : group.status} />
+      <InstallPrompt />
 
       {unmasked && (
         <section className={ui.block}>

@@ -7,6 +7,8 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router/dom";
 import { registerSW } from "virtual:pwa-register";
 
+// Se importa aquí para empezar a escuchar el evento de instalación cuanto antes.
+import "./lib/install";
 import { router } from "./router";
 
 // Registra el service worker (src/sw.ts); si hay versión nueva, se activa sola.
