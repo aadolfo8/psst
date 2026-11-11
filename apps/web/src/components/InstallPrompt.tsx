@@ -37,7 +37,9 @@ export default function InstallPrompt() {
             ? "Primero ábrelo en Safari: desde este navegador no se puede instalar. "
             : ""}
           Toca compartir
-          <ShareIcon />y luego «añadir a pantalla de inicio». Ábrelo desde ahí.
+          <ShareIcon />y luego «añadir a pantalla de inicio». Ábrelo desde ahí. En iPhone la
+          app no comparte la sesión con Safari: la primera vez pega el enlace del grupo y entra
+          con tu nombre y tu PIN.
         </p>
       )}
       {mode === "manual" && showSteps && (

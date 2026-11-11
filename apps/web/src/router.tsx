@@ -9,6 +9,7 @@ import {
   chatLoader,
   demoLoader,
   groupLoader,
+  homeLoader,
   resultsLoader,
   revealLoader,
   shareLoader,
@@ -18,7 +19,7 @@ import RouteError from "./pages/RouteError";
 import Share from "./pages/Share";
 
 export const router = createBrowserRouter([
-  { path: "/", Component: Home },
+  { path: "/", loader: homeLoader, Component: Home, HydrateFallback: () => null },
   {
     path: "/g/:slug",
     loader: groupLoader,

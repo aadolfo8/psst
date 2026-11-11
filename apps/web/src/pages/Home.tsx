@@ -1,14 +1,25 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 
 import { DateField } from "../components/DateField";
 import { LatticeWindow } from "../components/LatticeWindow";
 import { PinField } from "../components/PinField";
-import { api, errorMessage } from "../lib/api/client";
+import { api, errorMessage, type GroupPublic } from "../lib/api/client";
+import { slugFromInput } from "../lib/groupSlug";
+import { isInstalled } from "../lib/platform";
 import ui from "../styles/ui.module.css";
 import styles from "./Home.module.css";
+import type { homeLoader } from "./loaders";
+
+const STATUS_LABEL: Record<GroupPublic["status"], string> = {
+  open: "apuntándose",
+  closed: "inscripciones cerradas",
+  drawn: "sorteo hecho",
+};
 
 export default function Home() {
+  const { groups } = useLoaderData<typeof homeLoader>();
+
   return (
     <div className={styles.home}>
       <header className={styles.bar}>
@@ -27,10 +38,74 @@ export default function Home() {
             El amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe.
             Sin cuentas: un nombre y un PIN.
           </p>
+          {groups.length > 0 && <MyGroups groups={groups} />}
+          {/* La app instalada no comparte sesión con el navegador en iPhone: ahí no hay grupos
+              que mostrar y la forma de volver es con el enlace. */}
+          {groups.length === 0 && isInstalled && <OpenGroupForm />}
         </div>
         <CreateGroupForm />
       </main>
     </div>
+  );
+}
+
+/** Los grupos en los que ya has entrado desde este navegador (o desde la app instalada). */
+function MyGroups({ groups }: { groups: GroupPublic[] }) {
+  return (
+    <section className={`${ui.block} ${styles.groups}`}>
+      <h2 className={ui.subtitle}>tus grupos</h2>
+      <ul className={styles.groupList}>
+        {groups.map((group) => (
+          <li key={group.slug}>
+            <Link to={`/g/${group.slug}`} className={styles.groupLink}>
+              <span className={styles.groupName}>{group.name}</span>
+              <span className={styles.groupStatus}>
+                {group.demo ? "demo" : STATUS_LABEL[group.status]}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Para volver a un grupo cuando no hay sesión guardada: pegas el enlace y entras con tu PIN. */
+function OpenGroupForm() {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const slug = slugFromInput(String(new FormData(event.currentTarget).get("link")));
+    if (slug) navigate(`/g/${slug}`);
+    else setError("no parece el enlace de un grupo");
+  }
+
+  return (
+    <form className={`${ui.block} ${styles.groups}`} onSubmit={handleSubmit}>
+      <h2 className={ui.subtitle}>volver a tu grupo</h2>
+      <p className={ui.hint}>
+        Pega el enlace del grupo que te mandaron. Entras con tu nombre y tu PIN.
+      </p>
+      <input
+        className={ui.input}
+        name="link"
+        required
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        placeholder="https://psst.hidan.es/g/…"
+        aria-label="enlace del grupo"
+        onChange={() => setError(null)}
+      />
+      {error && (
+        <p className={ui.error} role="alert">
+          {error}
+        </p>
+      )}
+      <button className={ui.button}>entrar al grupo</button>
+    </form>
   );
 }
 

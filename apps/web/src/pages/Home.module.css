@@ -60,6 +60,46 @@
   max-width: 480px;
 }
 
+.groups {
+  margin-top: 6px;
+}
+
+.groupList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupLink {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--sombra);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--cal);
+  text-decoration: none;
+}
+
+.groupLink:hover {
+  background: var(--anil);
+}
+
+.groupName {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.groupStatus {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--cal-2);
+}
+
 /* En pantallas anchas, el titular a la izquierda y el formulario a la derecha. */
 @media (min-width: 860px) {
   .content {

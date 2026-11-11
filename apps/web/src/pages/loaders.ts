@@ -5,7 +5,8 @@
  */
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
 
-import { api } from "../lib/api/client";
+import { api, type GroupPublic } from "../lib/api/client";
+import { isInstalled } from "../lib/platform";
 
 function slugFrom(params: LoaderFunctionArgs["params"]): string {
   return params.slug ?? "";
@@ -24,6 +25,35 @@ async function fetchPublicGroup(slug: string) {
   });
   if (!group) throw loadFailed(response.status);
   return group;
+}
+
+/**
+ * Inicio. Pide los grupos en los que este navegador ya tiene sesión. Con la app instalada
+ * (que siempre arranca aquí) y un solo grupo, entra directamente a él; en el navegador no se
+ * redirige, para no rebotar a quien viene a crear un grupo nuevo.
+ */
+export async function homeLoader() {
+  // Solo al arrancar: si no, el logo «psst» de las pantallas del grupo (que enlaza a /)
+  // devolvería siempre al grupo y nunca se podría llegar al inicio desde la app.
+  const launching = launchedAtHome;
+  launchedAtHome = false;
+
+  const groups = await fetchMyGroups();
+  if (launching && isInstalled && groups.length === 1) throw redirect(`/g/${groups[0].slug}`);
+  return { groups };
+}
+
+// La app instalada arranca en "/" (start_url del manifest).
+let launchedAtHome = location.pathname === "/";
+
+async function fetchMyGroups(): Promise<GroupPublic[]> {
+  try {
+    const { data: groups } = await api.GET("/me/groups");
+    return groups ?? [];
+  } catch {
+    // Sin conexión o API caída: el inicio tiene que abrir igual, solo sin "tus grupos".
+    return [];
+  }
 }
 
 export async function shareLoader({ params }: LoaderFunctionArgs) {
