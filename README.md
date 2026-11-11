@@ -23,11 +23,22 @@ un enlace por WhatsApp, un nombre y un PIN de 4 cifras.
 
 </div>
 
-<!--
-  GIFs pendientes de grabar con la versión desplegada:
-  ![El revelado: las dos hojas de la celosía se abren](docs/revelado.gif)
-  ![El chat anónimo visto desde los dos lados](docs/chat.gif)
--->
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/revelado.gif" alt="El revelado: las dos hojas de la celosía se abren y aparece a quién le regalas, con su lista de deseos" width="100%"><br>
+      <sub>abres la celosía y ves a quién le regalas</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/chat.gif" alt="El chat anónimo: Lucía escribe a Mario, y Mario ve el mensaje de «tu amigo invisible» sin saber quién es" width="100%"><br>
+      <sub>el mismo chat visto desde los dos lados</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/desenmascarar.gif" alt="Al quitar las celosías, la ventanita del chat se abre, aparece el nombre de quien regalaba y se publica quién acertó su apuesta" width="100%"><br>
+      <sub>al final se quitan las celosías y se sabe quién acertó</sub>
+    </td>
+  </tr>
+</table>
 
 <br>
 
