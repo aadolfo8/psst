@@ -132,7 +132,7 @@
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
@@ -468,4 +468,52 @@
 
 .actions svg {
   margin-right: 8px;
+}
+
+/* ---------- Quitar las celosías ---------- */
+
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px 22px;
+  border: 0;
+  border-radius: var(--radio-bloque);
+  background: var(--anil-2);
+  color: var(--cal);
+}
+
+.dialog::backdrop {
+  background: rgba(11, 17, 80, 0.75);
+}
+
+.consequences {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.consequences strong {
+  font-weight: 600;
+}
+
+.warning {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radio-campo);
+  background: var(--sombra);
+  font-size: 15px;
+}
+
+.dialogActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* El diálogo vive dentro del panel: su campo vuelve a sombra para destacar del añil claro. */
+.dialog input {
+  background-color: var(--sombra);
 }

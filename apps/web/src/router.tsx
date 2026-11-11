@@ -4,7 +4,15 @@ import Chat from "./pages/group/Chat";
 import GroupPage from "./pages/group/GroupPage";
 import Reveal from "./pages/group/Reveal";
 import Home from "./pages/Home";
-import { chatLoader, demoLoader, groupLoader, revealLoader, shareLoader } from "./pages/loaders";
+import Results from "./pages/group/Results";
+import {
+  chatLoader,
+  demoLoader,
+  groupLoader,
+  resultsLoader,
+  revealLoader,
+  shareLoader,
+} from "./pages/loaders";
 import NotFound from "./pages/NotFound";
 import RouteError from "./pages/RouteError";
 import Share from "./pages/Share";
@@ -30,6 +38,13 @@ export const router = createBrowserRouter([
     path: "/g/:slug/chat",
     loader: chatLoader,
     Component: Chat,
+    ErrorBoundary: RouteError,
+    HydrateFallback: () => null,
+  },
+  {
+    path: "/g/:slug/resultados",
+    loader: resultsLoader,
+    Component: Results,
     ErrorBoundary: RouteError,
     HydrateFallback: () => null,
   },

@@ -6,7 +6,9 @@ import type { ChatRole, MessageOut } from "./api/client";
 export type ChatEvent =
   | { type: "message"; role: ChatRole; message: MessageOut }
   | { type: "read"; role: ChatRole }
-  | { type: "typing"; role: ChatRole };
+  | { type: "typing"; role: ChatRole }
+  // El organizador ha quitado las celosías: toca volver a pedir el chat (ya trae el nombre).
+  | { type: "unmasked" };
 
 const RECONNECT_MIN_MS = 1000;
 const RECONNECT_MAX_MS = 15000;

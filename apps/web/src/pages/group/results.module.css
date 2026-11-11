@@ -1,0 +1,91 @@
+/* Resultados: quién te regalaba (en albero, lo recién descubierto), detectives, espías y la
+   cadena completa del sorteo. */
+
+.mine {
+  padding: 26px 20px;
+  border-radius: var(--radio-bloque);
+  background: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.label {
+  font-size: 15px;
+  color: var(--cal-2);
+}
+
+.name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(44px, 13vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  color: var(--albero);
+}
+
+/* Etiquetas en píldora sombra, como "tú" y "organiza". */
+.names {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.names li {
+  padding: 6px 13px;
+  border-radius: var(--radio-pildora);
+  background: var(--sombra);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.chain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.chain li {
+  padding: 12px 0;
+  border-top: 1px solid var(--linea);
+}
+
+.chain li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.chain li:last-child {
+  padding-bottom: 0;
+}
+
+.link,
+.bet {
+  margin: 0;
+}
+
+.link {
+  font-size: 16px;
+}
+
+.link strong {
+  font-weight: 600;
+}
+
+.bet {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--cal-2);
+}
+
+.bet[data-right="true"] {
+  color: var(--albero);
+}

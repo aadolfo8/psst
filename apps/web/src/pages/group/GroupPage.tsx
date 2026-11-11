@@ -15,6 +15,7 @@ export default function GroupPage() {
       participants={data.participants}
       exclusions={data.exclusions}
       unread={data.unread}
+      guess={data.guess}
     />
   );
 }

@@ -44,10 +44,12 @@ export async function groupLoader({ params }: LoaderFunctionArgs) {
   }
   if (!me) throw loadFailed(response.status);
 
-  const [participants, exclusions, chat] = await Promise.all([
+  const drawn = me.group.status === "drawn";
+  const [participants, exclusions, chat, guess] = await Promise.all([
     api.GET("/groups/{slug}/participants", path),
     me.is_admin ? api.GET("/groups/{slug}/exclusions", path) : null,
-    me.group.status === "drawn" ? api.GET("/groups/{slug}/chat", path) : null,
+    drawn ? api.GET("/groups/{slug}/chat", path) : null,
+    drawn ? api.GET("/groups/{slug}/guess", path) : null,
   ]);
   return {
     kind: "member" as const,
@@ -55,6 +57,7 @@ export async function groupLoader({ params }: LoaderFunctionArgs) {
     participants: participants.data ?? [],
     exclusions: exclusions?.data ?? [],
     unread: (chat?.data?.as_giver ?? 0) + (chat?.data?.as_receiver ?? 0),
+    guess: guess?.data ?? null,
   };
 }
 
@@ -114,5 +117,25 @@ export async function chatLoader({ params }: LoaderFunctionArgs) {
     asReceiver: asReceiver.data.messages,
     asGiver: asGiver?.data?.messages ?? null,
     receiverName: revealed?.data?.receiver.name ?? null,
+    // Solo cuando el organizador ya ha quitado las celosías.
+    giverName: asReceiver.data.giver_name ?? null,
   };
+}
+
+/** Resultados: quién regalaba a quién y quién acertó. Solo con las celosías quitadas. */
+export async function resultsLoader({ params }: LoaderFunctionArgs) {
+  const slug = slugFrom(params);
+  const path = { params: { path: { slug } } };
+
+  const { data: me, response } = await api.GET("/groups/{slug}/me", path);
+  if (response.status === 401) throw redirect(`/g/${slug}`);
+  if (!me) throw loadFailed(response.status);
+  if (!me.group.unmasked_at) throw redirect(`/g/${slug}`);
+
+  const { data: results, response: resultsResponse } = await api.GET(
+    "/groups/{slug}/results",
+    path,
+  );
+  if (!results) throw loadFailed(resultsResponse.status);
+  return { me, pairs: results.pairs };
 }

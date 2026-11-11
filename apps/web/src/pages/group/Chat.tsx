@@ -32,9 +32,13 @@ export default function Chat() {
 }
 
 function ChatScreen({ data }: { data: Awaited<ReturnType<typeof chatLoader>> }) {
-  const { me, receiverName } = data;
+  const { me, receiverName, giverName } = data;
   const slug = me.group.slug;
+  const unmasked = me.group.unmasked_at != null;
   const [tab, setTab] = useState<ChatRole>("receiver");
+  // True si las celosías se quitan con el chat abierto: es lo que activa la animación.
+  const [unmasking, setUnmasking] = useState(false);
+  const { revalidate } = useRevalidator();
 
   const [conversations, setConversations] = useState<Conversations>({
     receiver: data.asReceiver,
@@ -65,10 +69,13 @@ function ChatScreen({ data }: { data: Awaited<ReturnType<typeof chatLoader>> }) 
       setTyping(event.role);
       clearTimeout(typingTimer.current);
       typingTimer.current = window.setTimeout(() => setTyping(null), TYPING_SHOWN_MS);
+    } else if (event.type === "unmasked") {
+      // El loader vuelve a pedir el chat, que ahora trae el nombre de quien te regalaba.
+      setUnmasking(true);
+      revalidate();
     }
   }
 
-  const { revalidate } = useRevalidator();
   const { sendTyping } = useChatSocket(slug, handleEvent, revalidate);
 
   // Al mirar una pestaña con mensajes sin leer (o al llegar uno nuevo a la que miras)
@@ -111,7 +118,18 @@ function ChatScreen({ data }: { data: Awaited<ReturnType<typeof chatLoader>> }) 
             a quien regalas
           </Tab>
         </div>
-        <Who tab={tab} receiverName={receiverName} />
+        <Who
+          tab={tab}
+          receiverName={receiverName}
+          giverName={giverName}
+          unmasked={unmasked}
+          unmasking={unmasking}
+        />
+        {unmasked && (
+          <Link to={`/g/${slug}/resultados`} className={ui.textLink}>
+            ver quién regalaba a quién
+          </Link>
+        )}
       </header>
 
       {messages === null ? (
@@ -125,7 +143,12 @@ function ChatScreen({ data }: { data: Awaited<ReturnType<typeof chatLoader>> }) 
         </section>
       ) : (
         <>
-          <Messages messages={messages} anonymous={tab === "receiver"} typing={typing === tab} />
+          <Messages
+            messages={messages}
+            anonymous={tab === "receiver" && !giverName}
+            name={tab === "receiver" ? giverName : null}
+            typing={typing === tab}
+          />
           {hasReceivedSomething && <PushPrompt slug={slug} />}
           <Composer
             slug={slug}
@@ -165,8 +188,34 @@ function Tab({
   );
 }
 
-/** Con quién hablas. Quien te regala es una ventanita de celosía: ni nombre ni inicial. */
-function Who({ tab, receiverName }: { tab: ChatRole; receiverName: string | null }) {
+/**
+ * Con quién hablas. Quien te regala es una ventanita de celosía: ni nombre ni inicial.
+ * Cuando el organizador quita las celosías, la ventanita se abre y aparece su nombre.
+ */
+function Who({
+  tab,
+  receiverName,
+  giverName,
+  unmasked,
+  unmasking,
+}: {
+  tab: ChatRole;
+  receiverName: string | null;
+  giverName: string | null;
+  unmasked: boolean;
+  unmasking: boolean;
+}) {
+  if (tab === "receiver" && giverName) {
+    return (
+      <div className={c.who}>
+        <UnmaskedAvatar name={giverName} opening={unmasking} />
+        <div>
+          <strong>{giverName}</strong>
+          <span>era tu amigo invisible</span>
+        </div>
+      </div>
+    );
+  }
   if (tab === "receiver") {
     return (
       <div className={c.who}>
@@ -183,7 +232,7 @@ function Who({ tab, receiverName }: { tab: ChatRole; receiverName: string | null
       {receiverName && <NamedAvatar name={receiverName} />}
       <div>
         <strong>{receiverName ?? "a quien regalas"}</strong>
-        <span>no sabe que eres tú</span>
+        <span>{unmasked ? "ya sabe que eras tú" : "no sabe que eres tú"}</span>
       </div>
     </div>
   );
@@ -193,6 +242,21 @@ function AnonymousAvatar() {
   return (
     <span className={c.anonymous} aria-label="anónimo">
       <i className={ui.lattice} />
+    </span>
+  );
+}
+
+/** La inicial de quien te regalaba, con dos hojas de celosía que se abren (como en el revelado). */
+function UnmaskedAvatar({ name, opening }: { name: string; opening: boolean }) {
+  return (
+    <span className={opening ? `${c.unmask} ${c.opening}` : c.unmask}>
+      <NamedAvatar name={name} />
+      {opening && (
+        <>
+          <i className={`${ui.lattice} ${c.leaf} ${c.leafLeft}`} aria-hidden="true" />
+          <i className={`${ui.lattice} ${c.leaf} ${c.leafRight}`} aria-hidden="true" />
+        </>
+      )}
     </span>
   );
 }
@@ -208,12 +272,23 @@ function NamedAvatar({ name }: { name: string }) {
 function Messages({
   messages,
   anonymous,
+  name,
   typing,
 }: {
   messages: MessageOut[];
   anonymous: boolean;
+  // Si se sabe quién es la otra persona (quien te regalaba, tras quitar las celosías).
+  name: string | null;
   typing: boolean;
 }) {
+  const avatar = anonymous ? (
+    <AnonymousAvatar />
+  ) : name ? (
+    <NamedAvatar name={name} />
+  ) : (
+    <span className={c.spacer} />
+  );
+
   const listRef = useRef<HTMLDivElement>(null);
   const last = messages[messages.length - 1];
 
@@ -234,13 +309,13 @@ function Messages({
       )}
       {messages.map((m) => (
         <div key={m.id} className={m.mine ? `${c.message} ${c.mine}` : c.message}>
-          {!m.mine && (anonymous ? <AnonymousAvatar /> : <span className={c.spacer} />)}
+          {!m.mine && avatar}
           <p>{m.body}</p>
         </div>
       ))}
       {typing && (
         <div className={`${c.message} ${c.typing}`} aria-label="escribiendo">
-          {anonymous ? <AnonymousAvatar /> : <span className={c.spacer} />}
+          {avatar}
           <p>
             <i />
             <i />

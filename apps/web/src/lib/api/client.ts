@@ -22,6 +22,16 @@ export type Conversation = Schemas["Conversation"];
 export type MessageOut = Schemas["MessageOut"];
 export type ChatSummary = Schemas["ChatSummary"];
 export type PushSubscriptionIn = Schemas["PushSubscriptionIn"];
+export type GuessStatus = Schemas["GuessStatus"];
+export type ResultPair = Schemas["ResultPair"];
+
+/** Lo que hay que escribir para quitar las celosías (la API comprueba lo mismo). */
+export const UNMASK_PHRASE = "desenmascarar";
+
+/** Como en la API: sin mayúsculas ni espacios de más. */
+export function isUnmaskPhrase(text: string): boolean {
+  return text.trim().split(/\s+/).join(" ").toLowerCase() === UNMASK_PHRASE;
+}
 
 /** Mensaje para mostrar a partir del cuerpo de una respuesta de error de la API. */
 export function errorMessage(error: unknown): string {

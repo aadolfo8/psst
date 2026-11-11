@@ -6,19 +6,22 @@ import {
   errorMessage,
   type ExclusionOut,
   type GroupPublic,
+  type GuessStatus,
   type ParticipantPublic,
 } from "../../lib/api/client";
 import ui from "../../styles/ui.module.css";
 import g from "./group.module.css";
+import UnmaskDialog from "./UnmaskDialog";
 
 type Props = {
   group: GroupPublic;
   participants: ParticipantPublic[];
   exclusions: ExclusionOut[];
+  guess: GuessStatus | null;
 };
 
 /** Lo que solo ve el organizador: invitar, cerrar inscripciones, exclusiones y sorteo. */
-export default function AdminPanel({ group, participants, exclusions }: Props) {
+export default function AdminPanel({ group, participants, exclusions, guess }: Props) {
   const { revalidate } = useRevalidator();
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -62,6 +65,7 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
 
   const isOpen = group.status === "open";
   const isDrawn = group.status === "drawn";
+  const unmasked = group.unmasked_at != null;
   const seen = participants.filter((p) => p.has_revealed).length;
 
   return (
@@ -184,6 +188,23 @@ export default function AdminPanel({ group, participants, exclusions }: Props) {
           </button>
         )}
       </div>
+
+      {isDrawn && (
+        <div className={g.adminPart}>
+          <div className={g.partHead}>
+            <h3 className={ui.subtitle}>celosías</h3>
+            <span className={g.state} data-open={unmasked}>
+              {unmasked ? "quitadas" : "puestas"}
+            </span>
+          </div>
+          <p className={ui.hint}>
+            {unmasked
+              ? "Ya todos saben quién les regalaba."
+              : "El día del intercambio, quítalas: todos verán quién les regalaba y quién acertó su apuesta."}
+          </p>
+          {!unmasked && <UnmaskDialog slug={group.slug} guess={guess} />}
+        </div>
+      )}
 
       {error && (
         <p className={ui.error} role="alert">

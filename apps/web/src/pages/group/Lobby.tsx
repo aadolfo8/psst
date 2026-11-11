@@ -1,20 +1,30 @@
 import { Link, useRevalidator } from "react-router";
 
-import type { ExclusionOut, GroupPublic, Me, ParticipantPublic } from "../../lib/api/client";
+import type {
+  ExclusionOut,
+  GroupPublic,
+  GuessStatus,
+  Me,
+  ParticipantPublic,
+} from "../../lib/api/client";
 import { usePolling } from "../../lib/usePolling";
 import ui from "../../styles/ui.module.css";
 import AdminPanel from "./AdminPanel";
 import DemoBar from "./DemoBar";
 import g from "./group.module.css";
 import GroupHeader from "./GroupHeader";
+import Guess from "./Guess";
 import Wishlist from "./Wishlist";
 
 const POLL_INTERVAL_MS = 5000;
 
-const STEPS: { status: GroupPublic["status"]; label: string }[] = [
-  { status: "open", label: "apuntándose" },
-  { status: "closed", label: "inscripciones cerradas" },
-  { status: "drawn", label: "sorteo hecho" },
+type Phase = GroupPublic["status"] | "unmasked";
+
+const STEPS: { phase: Phase; label: string }[] = [
+  { phase: "open", label: "apuntándose" },
+  { phase: "closed", label: "inscripciones cerradas" },
+  { phase: "drawn", label: "sorteo hecho" },
+  { phase: "unmasked", label: "celosías quitadas" },
 ];
 
 type Props = {
@@ -22,14 +32,16 @@ type Props = {
   participants: ParticipantPublic[];
   exclusions: ExclusionOut[];
   unread: number;
+  guess: GuessStatus | null;
 };
 
-export default function Lobby({ me, participants, exclusions, unread }: Props) {
+export default function Lobby({ me, participants, exclusions, unread, guess }: Props) {
   const { revalidate } = useRevalidator();
   // Vuelve a ejecutar el loader: así aparece quien se acaba de unir.
   usePolling(revalidate, POLL_INTERVAL_MS);
 
   const group = me.group;
+  const unmasked = group.unmasked_at != null;
 
   return (
     <main className={ui.page}>
@@ -38,9 +50,26 @@ export default function Lobby({ me, participants, exclusions, unread }: Props) {
       </Link>
       {group.demo && <DemoBar me={me} />}
       <GroupHeader group={group} />
-      <Steps status={group.status} />
+      <Steps phase={unmasked ? "unmasked" : group.status} />
 
-      {group.status === "drawn" && (
+      {unmasked && (
+        <section className={ui.block}>
+          <h2 className={ui.subtitle}>se acabó el misterio</h2>
+          <p className={ui.hint}>
+            Se han quitado las celosías: ya puedes ver quién te regalaba y quién acertó su
+            apuesta.
+          </p>
+          <Link className={ui.button} to={`/g/${group.slug}/resultados`}>
+            ver quién regalaba a quién
+          </Link>
+          <Link className={unread > 0 ? ui.button : ui.ghost} to={`/g/${group.slug}/chat`}>
+            chat
+            {unread > 0 && <span className={g.badge}>{unread}</span>}
+          </Link>
+        </section>
+      )}
+
+      {group.status === "drawn" && !unmasked && (
         <section className={ui.block}>
           <h2 className={ui.subtitle}>el sorteo está hecho</h2>
           <p className={ui.hint}>
@@ -59,6 +88,11 @@ export default function Lobby({ me, participants, exclusions, unread }: Props) {
             {unread > 0 && <span className={g.badge}>{unread}</span>}
           </Link>
         </section>
+      )}
+
+      {/* key: en la demo, al cambiar de persona la apuesta empieza de cero. */}
+      {guess && !unmasked && (
+        <Guess key={me.id} me={me} participants={participants} guess={guess} />
       )}
 
       <section className={ui.block}>
@@ -82,22 +116,27 @@ export default function Lobby({ me, participants, exclusions, unread }: Props) {
       <Wishlist me={me} />
 
       {me.is_admin && (
-        <AdminPanel group={group} participants={participants} exclusions={exclusions} />
+        <AdminPanel
+          group={group}
+          participants={participants}
+          exclusions={exclusions}
+          guess={guess}
+        />
       )}
     </main>
   );
 }
 
-/** Barra de tres tramos con la fase en la que está el grupo. */
-function Steps({ status }: { status: GroupPublic["status"] }) {
-  const current = STEPS.findIndex((step) => step.status === status);
+/** Barra de cuatro tramos con la fase en la que está el grupo. */
+function Steps({ phase }: { phase: Phase }) {
+  const current = STEPS.findIndex((step) => step.phase === phase);
 
   return (
     <ol className={g.steps} aria-label="fase del grupo">
       {STEPS.map((step, i) => {
         const state = i < current ? "done" : i === current ? "current" : "next";
         return (
-          <li key={step.status} data-state={state} aria-current={state === "current" ? "step" : undefined}>
+          <li key={step.phase} data-state={state} aria-current={state === "current" ? "step" : undefined}>
             {step.label}
           </li>
         );
