@@ -307,12 +307,6 @@
   font-size: 15px;
 }
 
-.shareIcon {
-  margin: 0 4px;
-  vertical-align: -3px;
-  color: var(--cal);
-}
-
 .composer {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import ShareIcon from "../../components/ShareIcon";
 import { enablePush, getPushState, type PushState } from "../../lib/push";
 import ui from "../../styles/ui.module.css";
 import c from "./chat.module.css";
@@ -90,28 +91,6 @@ export default function PushPrompt({ slug }: { slug: string }) {
         </>
       )}
     </aside>
-  );
-}
-
-function ShareIcon() {
-  return (
-    <svg
-      className={c.shareIcon}
-      width="16"
-      height="18"
-      viewBox="0 0 16 18"
-      aria-label="icono de compartir"
-      role="img"
-    >
-      <path
-        d="M8 1v11M4.5 4.5L8 1l3.5 3.5M3 8H1.5v9h13V8H13"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 

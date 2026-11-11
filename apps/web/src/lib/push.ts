@@ -1,4 +1,5 @@
 import { api, type PushSubscriptionIn } from "./api/client";
+import { isInstalled, isIOS } from "./platform";
 
 /**
  * Avisos push desde el navegador. Pasos para activarlos en un dispositivo:
@@ -13,9 +14,6 @@ export type PushState =
   | "denied" // el permiso se negó en el navegador; solo se puede cambiar en sus ajustes
   | "off"
   | "on";
-
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
 
 export async function getPushState(): Promise<PushState> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
