@@ -18,7 +18,7 @@
 - API: en `apps/api`, `uv sync`, `uv run alembic upgrade head`,
   `uv run uvicorn app.main:app --reload`.
 - Web: `pnpm install` y `pnpm dev:web`.
-- Comprobaciones: `pnpm lint:web`, `pnpm typecheck:web`, `pnpm build:web`;
+- Comprobaciones: `pnpm lint:web`, `pnpm typecheck:web`, `pnpm test:web`, `pnpm build:web`;
   en `apps/api`: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`.
 - Nueva migración: `uv run alembic revision --autogenerate -m "..."`.
 

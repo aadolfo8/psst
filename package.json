@@ -6,6 +6,7 @@
     "dev:web": "pnpm --filter @psst/web dev",
     "lint:web": "pnpm --filter @psst/web lint",
     "typecheck:web": "pnpm --filter @psst/web typecheck",
+    "test:web": "pnpm --filter @psst/web test",
     "build:web": "pnpm --filter @psst/web build",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",

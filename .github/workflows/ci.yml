@@ -24,6 +24,7 @@ jobs:
       - run: git diff --exit-code apps/web/src/lib/api/schema.d.ts
       - run: pnpm lint:web
       - run: pnpm typecheck:web
+      - run: pnpm test:web
       - run: pnpm build:web
 
   api:
