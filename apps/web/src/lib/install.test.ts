@@ -21,11 +21,20 @@ async function load(options: { userAgent: string; standalone?: boolean }) {
 }
 
 /** Un `beforeinstallprompt` falso, con el `prompt()` y el `userChoice` del navegador. */
-function fakeInstallEvent() {
+function fakeInstallEvent(outcome: "accepted" | "dismissed" = "accepted") {
   const event = new Event("beforeinstallprompt", { cancelable: true });
   const prompt = vi.fn().mockResolvedValue(undefined);
-  Object.assign(event, { prompt, userChoice: Promise.resolve({ outcome: "accepted" }) });
+  Object.assign(event, { prompt, userChoice: Promise.resolve({ outcome }) });
   return { event, prompt };
+}
+
+function fakeStorage(initial: Record<string, string>) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => void data.set(key, value),
+    removeItem: (key: string) => void data.delete(key),
+  };
 }
 
 beforeEach(() => {
@@ -58,13 +67,30 @@ describe("getInstallMode", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it("pasa a installed cuando se instala y deja de ofrecer el botón", async () => {
+  it("pasa a done cuando se instala, para decir que la abras desde la pantalla de inicio", async () => {
     const { win, install } = await load({ userAgent: ANDROID_CHROME });
     win.dispatchEvent(fakeInstallEvent().event);
 
     win.dispatchEvent(new Event("appinstalled"));
 
+    expect(install.getInstallMode()).toBe("done");
+  });
+
+  it("recuerda que ya se instaló y no la vuelve a ofrecer en otra visita", async () => {
+    vi.stubGlobal("localStorage", fakeStorage({ "psst-installed": "1" }));
+    const { install } = await load({ userAgent: ANDROID_CHROME });
     expect(install.getInstallMode()).toBe("installed");
+  });
+
+  it("si Chrome vuelve a ofrecer instalarla, es que se desinstaló", async () => {
+    const storage = fakeStorage({ "psst-installed": "1" });
+    vi.stubGlobal("localStorage", storage);
+    const { win, install } = await load({ userAgent: ANDROID_CHROME });
+
+    win.dispatchEvent(fakeInstallEvent().event);
+
+    expect(install.getInstallMode()).toBe("prompt");
+    expect(storage.getItem("psst-installed")).toBeNull();
   });
 
   it("está installed si la web ya se abrió desde la pantalla de inicio", async () => {
@@ -92,6 +118,16 @@ describe("promptInstall", () => {
     await install.promptInstall();
 
     expect(prompt).toHaveBeenCalledOnce();
+    // Aceptado: sigue "instalando" hasta que el navegador lance appinstalled.
+    expect(install.getInstallMode()).toBe("installing");
+  });
+
+  it("si se cancela el diálogo, vuelve a explicar cómo instalarla desde el menú", async () => {
+    const { win, install } = await load({ userAgent: ANDROID_CHROME });
+    win.dispatchEvent(fakeInstallEvent("dismissed").event);
+
+    await install.promptInstall();
+
     expect(install.getInstallMode()).toBe("manual");
   });
 

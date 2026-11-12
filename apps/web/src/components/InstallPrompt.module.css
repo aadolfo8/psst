@@ -55,3 +55,32 @@
   padding: 10px 18px;
   font-size: 15px;
 }
+
+.progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.progress svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--albero);
+}
+
+/* Mientras instala, la estrella late despacio: es la única señal de que algo está pasando. */
+.pulse {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

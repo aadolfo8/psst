@@ -30,6 +30,10 @@ export default function InstallPrompt({ footer }: { footer?: "always" | "after-d
   const visible = footer === "always" || (footer === "after-dismiss") === dismissed;
   if (!visible) return null;
 
+  if (mode === "installing" || mode === "done") {
+    return <Progress mode={mode} footer={!!footer} />;
+  }
+
   if (footer) {
     return (
       <footer className={s.discreet}>
@@ -74,6 +78,38 @@ export default function InstallPrompt({ footer }: { footer?: "always" | "after-d
           ahora no
         </button>
       </div>
+    </aside>
+  );
+}
+
+/**
+ * Lo que pasa después de aceptar el diálogo. La instalación la hace el navegador y no da
+ * progreso: solo sabemos que la has aceptado y, al final, que ha terminado.
+ */
+function Progress({ mode, footer }: { mode: "installing" | "done"; footer: boolean }) {
+  return (
+    <aside className={footer ? s.discreet : s.prompt} role="status">
+      <p className={s.progress}>
+        <svg
+          className={mode === "installing" ? s.pulse : undefined}
+          width="16"
+          height="16"
+          viewBox="0 0 12 12"
+          aria-hidden="true"
+        >
+          <path d="M6 0l1.6 4.4L12 6 7.6 7.6 6 12 4.4 7.6 0 6l4.4-1.6z" fill="currentColor" />
+        </svg>
+        {mode === "installing" ? (
+          <span>
+            <strong>instalando psst…</strong> Tu navegador te avisará cuando esté lista.
+          </span>
+        ) : (
+          <span>
+            <strong>ya la tienes.</strong> Ábrela desde tu pantalla de inicio: se ve a pantalla
+            completa.
+          </span>
+        )}
+      </p>
     </aside>
   );
 }
