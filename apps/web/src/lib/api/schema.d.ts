@@ -227,6 +227,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/participants/{participant_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw
+         * @description Alguien no puede ir después del sorteo: se le quita y se recoloca lo mínimo.
+         *
+         *     Ver `close_gap`: normalmente solo cambia a quién regala quien le regalaba a esa persona.
+         *     Las conversaciones de las parejas que cambian se pierden (se borran en cascada) y quien
+         *     tiene destinatario nuevo debe volver a abrir su celosía; se le avisa por push.
+         */
+        post: operations["withdraw_groups__slug__participants__participant_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups/{slug}/me/reveal": {
         parameters: {
             query?: never;
@@ -1215,6 +1239,38 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_groups__slug__participants__participant_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                participant_id: string;
                 slug: string;
             };
             cookie?: never;

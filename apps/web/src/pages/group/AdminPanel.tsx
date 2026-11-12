@@ -27,8 +27,6 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const { revalidate } = useRevalidator();
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  // A quién se va a quitar: se pide confirmación en la misma fila antes de borrar.
-  const [removing, setRemoving] = useState<string | null>(null);
   const path = { params: { path: { slug: group.slug } } };
 
   /** Ejecuta una llamada a la API y, si va bien, recarga los datos de la sala. */
@@ -59,13 +57,20 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
     );
   }
 
-  async function removeParticipant(id: string) {
-    await run(() =>
+  function removeParticipant(id: string) {
+    return run(() =>
       api.DELETE("/groups/{slug}/participants/{participant_id}", {
         params: { path: { slug: group.slug, participant_id: id } },
       }),
     );
-    setRemoving(null);
+  }
+
+  function withdrawParticipant(id: string) {
+    return run(() =>
+      api.POST("/groups/{slug}/participants/{participant_id}/withdraw", {
+        params: { path: { slug: group.slug, participant_id: id } },
+      }),
+    );
   }
 
   function setStatus(status: "open" | "closed") {
@@ -103,54 +108,14 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
         {!isDrawn && others.length > 0 && (
-          <details className={g.removeList}>
-            <summary>quitar a alguien</summary>
-            <p className={ui.hint}>
-              Por si alguien se ha apuntado dos veces o por error. Se borran también sus
-              exclusiones.
-            </p>
-            <ul className={g.pairs}>
-              {others.map((p) => (
-                <li key={p.id} className={g.pair}>
-                  {removing === p.id ? (
-                    <>
-                      <span>¿quitar a {p.name}?</span>
-                      <span className={g.confirm}>
-                        <button
-                          type="button"
-                          className={ui.linkButton}
-                          disabled={sending}
-                          onClick={() => removeParticipant(p.id)}
-                        >
-                          sí, quitar
-                        </button>
-                        <button
-                          type="button"
-                          className={ui.linkButton}
-                          onClick={() => setRemoving(null)}
-                        >
-                          cancelar
-                        </button>
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{p.name}</span>
-                      <button
-                        type="button"
-                        className={g.remove}
-                        disabled={sending}
-                        onClick={() => setRemoving(p.id)}
-                        aria-label={`quitar a ${p.name} del grupo`}
-                      >
-                        <CrossIcon />
-                      </button>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </details>
+          <PeopleAction
+            summary="quitar a alguien"
+            hint="Por si alguien se ha apuntado dos veces o por error. Se borran también sus exclusiones."
+            confirm="sí, quitar"
+            people={others}
+            sending={sending}
+            onConfirm={removeParticipant}
+          />
         )}
         <div className={g.actions}>
           {isOpen && (
@@ -240,6 +205,16 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
           </button>
         )}
         {isDrawn && seen < participants.length && <DrawnNotice group={group} />}
+        {isDrawn && !unmasked && others.length > 0 && (
+          <PeopleAction
+            summary="alguien no puede ir"
+            hint="Se le quita del sorteo y quien le regalaba pasa a regalar a otra persona (casi siempre solo cambia esa). Las conversaciones de las parejas que cambian se pierden y se avisa a quien tiene que volver a mirar."
+            confirm="sí, quitarle"
+            people={others}
+            sending={sending}
+            onConfirm={withdrawParticipant}
+          />
+        )}
         {isDrawn && seen === 0 && (
           <button type="button" className={ui.ghost} disabled={sending} onClick={makeDraw}>
             repetir el sorteo
@@ -295,6 +270,76 @@ function DrawnNotice({ group }: { group: GroupPublic }) {
         avisar por WhatsApp
       </a>
     </div>
+  );
+}
+
+type PeopleActionProps = {
+  summary: string;
+  hint: string;
+  confirm: string;
+  people: ParticipantPublic[];
+  sending: boolean;
+  onConfirm: (id: string) => Promise<void>;
+};
+
+/**
+ * Lista plegada con una ✕ por persona. Al pulsarla se pide confirmación en la misma fila,
+ * sin diálogos del navegador. Sirve para quitar a alguien antes del sorteo y después.
+ */
+function PeopleAction({ summary, hint, confirm, people, sending, onConfirm }: PeopleActionProps) {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  async function handleConfirm(id: string) {
+    await onConfirm(id);
+    setSelected(null);
+  }
+
+  return (
+    <details className={g.removeList}>
+      <summary>{summary}</summary>
+      <p className={ui.hint}>{hint}</p>
+      <ul className={g.pairs}>
+        {people.map((p) => (
+          <li key={p.id} className={g.pair}>
+            {selected === p.id ? (
+              <>
+                <span>¿quitar a {p.name}?</span>
+                <span className={g.confirm}>
+                  <button
+                    type="button"
+                    className={ui.linkButton}
+                    disabled={sending}
+                    onClick={() => handleConfirm(p.id)}
+                  >
+                    {confirm}
+                  </button>
+                  <button
+                    type="button"
+                    className={ui.linkButton}
+                    onClick={() => setSelected(null)}
+                  >
+                    cancelar
+                  </button>
+                </span>
+              </>
+            ) : (
+              <>
+                <span>{p.name}</span>
+                <button
+                  type="button"
+                  className={g.remove}
+                  disabled={sending}
+                  onClick={() => setSelected(p.id)}
+                  aria-label={`${summary}: ${p.name}`}
+                >
+                  <CrossIcon />
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

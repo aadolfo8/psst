@@ -69,8 +69,6 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   del producto, después de la v1.
 - App nativa. Opcional después de Navidad, reutilizando la API.
 - Cuentas, email, recuperación por SMS, varios idiomas.
-- Gestionar bajas después del sorteo (en la v1, el organizador repite el sorteo
-  solo si nadie ha visto todavía su resultado).
 
 ## Stack y decisiones
 - Monorepo: apps/web (Vite + React + TypeScript, pnpm) y apps/api (FastAPI,
@@ -124,6 +122,9 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 - Asignación aleatoria en la que nadie se toca a sí mismo y se respetan
   las exclusiones (simétricas).
 - Backtracking aleatorizado; con grupos de hasta 50 personas es suficiente.
+- Bajas después del sorteo (`close_gap`): quien regalaba a la persona que se va pasa a
+  regalar a quien ella regalaba. Si eso no vale (exclusión o pareja de dos), se cruza con
+  otra pareja al azar. Cambian dos personas como mucho y se les avisa por push.
 - Si no hay ninguna solución posible, devolver un error claro
   ("Ana no puede regalar a nadie con estas exclusiones").
 - Tests basados en propiedades con Hypothesis: biyección, sin autoasignaciones,
