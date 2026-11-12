@@ -303,6 +303,11 @@
   gap: 16px;
 }
 
+/* .linkButton trae align-self: flex-start (para columnas); en esta fila va centrado. */
+.promptActions > button {
+  align-self: center;
+}
+
 .promptActions .promptButton {
   padding: 10px 18px;
   font-size: 15px;

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useLoaderData, useNavigate } from "react-router";
 
 import { DateField } from "../components/DateField";
+import InstallPrompt from "../components/InstallPrompt";
 import { LatticeWindow } from "../components/LatticeWindow";
 import { PinField } from "../components/PinField";
 import { api, errorMessage, type GroupPublic } from "../lib/api/client";
@@ -38,6 +39,7 @@ export default function Home() {
             El amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe.
             Sin cuentas: un nombre y un PIN.
           </p>
+          <InstallPrompt />
           {groups.length > 0 && <MyGroups groups={groups} />}
           {/* La app instalada no comparte sesión con el navegador en iPhone: ahí no hay grupos
               que mostrar y la forma de volver es con el enlace. */}
@@ -45,6 +47,9 @@ export default function Home() {
         </div>
         <CreateGroupForm />
       </main>
+      <div className={styles.footer}>
+        <InstallPrompt footer="after-dismiss" />
+      </div>
     </div>
   );
 }

@@ -19,10 +19,36 @@
   font-weight: 600;
 }
 
+.discreet {
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--cal-2);
+}
+
+.discreet p {
+  margin: 0;
+  max-width: 480px;
+}
+
+.discreet button {
+  font-size: 14px;
+  color: var(--cal-2);
+}
+
 .actions {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* .linkButton trae align-self: flex-start (para columnas); en esta fila va centrado. */
+.actions > button {
+  align-self: center;
 }
 
 .actions .button {

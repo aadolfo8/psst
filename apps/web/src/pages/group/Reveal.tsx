@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router";
 
+import InstallPrompt from "../../components/InstallPrompt";
 import { api, errorMessage, type RevealedReceiver } from "../../lib/api/client";
 import { groupDetails } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
@@ -109,6 +110,7 @@ export default function Reveal() {
           </div>
         </div>
       )}
+      <InstallPrompt footer="always" />
     </main>
   );
 }
