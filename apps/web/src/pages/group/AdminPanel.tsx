@@ -9,6 +9,8 @@ import {
   type GuessStatus,
   type ParticipantPublic,
 } from "../../lib/api/client";
+import { WhatsAppIcon } from "../../components/WhatsAppIcon";
+import { inviteUrl } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
 import g from "./group.module.css";
 import UnmaskDialog from "./UnmaskDialog";
@@ -237,6 +239,7 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             hacer el sorteo
           </button>
         )}
+        {isDrawn && seen < participants.length && <DrawnNotice group={group} />}
         {isDrawn && seen === 0 && (
           <button type="button" className={ui.ghost} disabled={sending} onClick={makeDraw}>
             repetir el sorteo
@@ -267,6 +270,31 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * Tras el sorteo: a quien tenga los avisos activados le llega una push, pero a la mayoría
+ * hay que decírselo. El mensaje de WhatsApp ya va redactado, con el enlace del grupo.
+ */
+function DrawnNotice({ group }: { group: GroupPublic }) {
+  const message = `Ya está hecho el sorteo de "${group.name}". Entra con tu nombre y tu PIN para descubrir a quién le regalas: ${inviteUrl(group.slug)}`;
+  return (
+    <div className={g.drawnNotice}>
+      <p className={ui.hint}>
+        Avisa al grupo de que ya pueden entrar. A quien tenga los avisos activados le ha
+        llegado uno.
+      </p>
+      <a
+        className={ui.button}
+        href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <WhatsAppIcon />
+        avisar por WhatsApp
+      </a>
+    </div>
   );
 }
 

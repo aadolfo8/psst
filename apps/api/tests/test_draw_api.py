@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Assignment
 from tests.conftest import create_group, join
+from tests.test_push import subscribe
 
 NAMES = ["Luis", "Marta", "Pablo"]
 
@@ -220,3 +221,30 @@ async def test_nobody_learns_who_gives_to_whom(group) -> None:
     receiver_id = revealed.json()["receiver"]["id"]
     others = set(ids.values()) - {ids["Luis"], receiver_id}
     assert not any(other in revealed.text for other in others)
+
+
+# --- aviso del sorteo ----------------------------------------------------------------------
+
+
+async def test_first_draw_pushes_everyone_but_the_organizer(group, sent) -> None:
+    slug, clients = group["slug"], group["clients"]
+    await subscribe(clients["Ana"], slug, "https://push.example/ana")
+    await subscribe(clients["Luis"], slug, "https://push.example/luis")
+    await close(group)
+
+    assert (await draw(group)).status_code == 200
+
+    assert [call["endpoint"] for call in sent] == ["https://push.example/luis"]
+    assert f"/g/{slug}/revelado" in sent[0]["data"]
+    # El aviso no dice a quién le regalas.
+    assert not any(name in sent[0]["data"] for name in NAMES)
+
+
+async def test_repeated_draw_does_not_push_again(group, sent) -> None:
+    await subscribe(group["clients"]["Luis"], group["slug"])
+    await close(group)
+    await draw(group)
+
+    assert (await draw(group)).status_code == 200
+
+    assert len(sent) == 1
