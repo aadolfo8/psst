@@ -237,3 +237,13 @@ select.input {
   align-self: flex-start;
   font-size: 15px;
 }
+
+/* Solo para lectores de pantalla: no se ve, pero se lee. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
