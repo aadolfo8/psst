@@ -81,3 +81,48 @@ def draw_assignments[T](
     if not assign_next():
         raise DrawImpossible(NO_SOLUTION)
     return assignment
+
+
+def close_gap[T](
+    gives_to: Mapping[T, T],
+    leaving: T,
+    exclusions: Iterable[frozenset[T]],
+    rng: Random,
+) -> dict[T, T]:
+    """Quita a `leaving` de un sorteo ya hecho tocando lo mínimo. Devuelve el reparto nuevo.
+
+    Al irse Ana quedan dos huecos: quien le regalaba (Pepe) se queda sin destinatario y a
+    quien regalaba Ana (Xavi) se queda sin nadie que le regale. Lo normal es cerrarlos
+    juntos: Pepe pasa a regalar a Xavi y nadie más cambia.
+
+    Si no se puede (Pepe y Xavi están excluidos, o son la misma persona porque Ana y Xavi
+    se regalaban entre sí), se abre otra pareja P -> Q al azar y se cruza: Pepe regala a Q y
+    P regala a Xavi. Cambian dos personas más, pero sigue siendo un reparto válido.
+    """
+    excluded = set(exclusions)
+
+    def allowed(giver: T, receiver: T) -> bool:
+        return giver != receiver and frozenset((giver, receiver)) not in excluded
+
+    # Con dos personas cada una sabría quién le regala: hacen falta al menos tres.
+    if len(gives_to) - 1 < 3:
+        raise DrawImpossible("con una persona menos no quedan suficientes para el sorteo")
+
+    orphan_giver = next(g for g, r in gives_to.items() if r == leaving)  # Pepe
+    orphan_receiver = gives_to[leaving]  # Xavi
+    result = {g: r for g, r in gives_to.items() if leaving not in (g, r)}
+
+    if allowed(orphan_giver, orphan_receiver):
+        result[orphan_giver] = orphan_receiver
+        return result
+
+    pairs = list(result.items())
+    rng.shuffle(pairs)
+    for giver, receiver in pairs:
+        if allowed(orphan_giver, receiver) and allowed(giver, orphan_receiver):
+            result[orphan_giver] = receiver
+            result[giver] = orphan_receiver
+            return result
+    raise DrawImpossible(
+        "no hay forma de recolocar el sorteo sin esta persona con estas exclusiones"
+    )

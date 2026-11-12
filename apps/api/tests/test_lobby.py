@@ -57,6 +57,74 @@ async def test_participants_in_join_order_without_private_data(lobby) -> None:
     ]
 
 
+# --- quitar participantes ----------------------------------------------------------------
+
+
+async def test_admin_removes_participant_and_their_exclusions(lobby) -> None:
+    admin, slug = lobby["admin"], lobby["slug"]
+    await admin.post(
+        f"/groups/{slug}/exclusions",
+        json={"participant_a_id": lobby["luis"], "participant_b_id": lobby["marta"]},
+    )
+
+    response = await admin.delete(f"/groups/{slug}/participants/{lobby['luis']}")
+
+    assert response.status_code == 204
+    names = [p["name"] for p in (await admin.get(f"/groups/{slug}/participants")).json()]
+    assert names == ["Ana", "Marta"]
+    assert (await admin.get(f"/groups/{slug}/exclusions")).json() == []
+
+
+async def test_removed_participant_loses_their_session(lobby) -> None:
+    await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['luis']}")
+
+    response = await lobby["luis_client"].get(f"/groups/{lobby['slug']}/me")
+
+    assert response.status_code == 401
+
+
+async def test_removed_name_can_join_again(lobby, new_client) -> None:
+    await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['luis']}")
+
+    async with new_client() as again:
+        response = await again.post(
+            f"/groups/{lobby['slug']}/participants", json={"name": "luis", "pin": "1111"}
+        )
+
+    assert response.status_code == 201
+
+
+async def test_only_admin_removes_participants(lobby) -> None:
+    response = await lobby["luis_client"].delete(
+        f"/groups/{lobby['slug']}/participants/{lobby['marta']}"
+    )
+
+    assert response.status_code == 403
+
+
+async def test_admin_cannot_remove_themselves(lobby) -> None:
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['ana']}")
+
+    assert response.status_code == 409
+
+
+async def test_remove_participant_from_another_group_is_404(lobby, new_client) -> None:
+    async with new_client() as other_admin:
+        other = await create_group(other_admin)
+
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{other['id']}")
+
+    assert response.status_code == 404
+
+
+async def test_cannot_remove_participants_after_draw(lobby, db) -> None:
+    await set_status(db, lobby["slug"], "drawn")
+
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['luis']}")
+
+    assert response.status_code == 409
+
+
 # --- lista de deseos -------------------------------------------------------------------
 
 

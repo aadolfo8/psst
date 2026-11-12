@@ -1,6 +1,8 @@
+/* Las variables --window-* permiten reutilizarla con otro tamaño (en el revelado). */
 .window {
   position: relative;
-  height: clamp(260px, 42vw, 380px);
+  height: var(--window-height, clamp(260px, 42vw, 380px));
+  border-radius: var(--window-radius, 0);
   background: var(--sombra);
   overflow: hidden;
   touch-action: pan-y; /* el dedo mueve la luz sin bloquear el scroll vertical */
@@ -15,8 +17,11 @@
   place-items: center;
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(92px, 25vw, 260px);
+  padding: 0 18px;
+  font-size: var(--window-name-size, clamp(92px, 25vw, 260px));
   letter-spacing: -0.04em;
+  text-align: center;
+  overflow-wrap: anywhere;
   line-height: 1;
   color: var(--albero);
   user-select: none;
@@ -30,14 +35,30 @@
   background: var(--cal);
   mask:
     var(--lattice-tile) 0 0 / var(--lattice-size) var(--lattice-size) repeat,
-    radial-gradient(circle at var(--x) var(--y), transparent 0 64px, #000 118px);
+    radial-gradient(
+      circle at var(--x) var(--y),
+      transparent 0 var(--window-spot, 64px),
+      #000 calc(var(--window-spot, 64px) + 54px)
+    );
   mask-composite: intersect;
+}
+
+/* Lo contrario de la luz: oscuro en toda la ventana menos en el círculo. */
+.veil {
+  position: absolute;
+  inset: 0;
+  background: var(--sombra);
+  mask: radial-gradient(
+    circle at var(--x) var(--y),
+    transparent 0 var(--window-spot, 64px),
+    #000 calc(var(--window-spot, 64px) + 54px)
+  );
 }
 
 .hint {
   position: absolute;
   /* alineado con la columna de contenido de la página (máx. 1040 px) */
-  left: max(var(--gutter), calc((100% - 1040px) / 2 + var(--gutter)));
+  left: var(--window-hint-left, max(var(--gutter), calc((100% - 1040px) / 2 + var(--gutter))));
   bottom: 14px;
   padding: 4px 11px;
   border-radius: var(--radio-pildora);

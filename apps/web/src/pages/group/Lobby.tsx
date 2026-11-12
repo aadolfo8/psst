@@ -1,6 +1,7 @@
 import { Link, useRevalidator } from "react-router";
 
 import InstallPrompt from "../../components/InstallPrompt";
+import { isInstalled } from "../../lib/platform";
 import type {
   ExclusionOut,
   GroupPublic,
@@ -15,6 +16,7 @@ import DemoBar from "./DemoBar";
 import g from "./group.module.css";
 import GroupHeader from "./GroupHeader";
 import Guess from "./Guess";
+import PushPrompt from "./PushPrompt";
 import Wishlist from "./Wishlist";
 
 const POLL_INTERVAL_MS = 5000;
@@ -53,6 +55,18 @@ export default function Lobby({ me, participants, exclusions, unread, guess }: P
       <GroupHeader group={group} />
       <Steps phase={unmasked ? "unmasked" : group.status} />
       <InstallPrompt />
+      {!unmasked && (
+        <PushPrompt
+          slug={group.slug}
+          where="lobby"
+          floating={isInstalled}
+          question={
+            group.status === "drawn"
+              ? "¿Te avisamos cuando te escriban?"
+              : "¿Te avisamos cuando se haga el sorteo?"
+          }
+        />
+      )}
 
       {unmasked && (
         <section className={ui.block}>
@@ -125,6 +139,7 @@ export default function Lobby({ me, participants, exclusions, unread, guess }: P
           guess={guess}
         />
       )}
+      <InstallPrompt footer="after-dismiss" />
     </main>
   );
 }

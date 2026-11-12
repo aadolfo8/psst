@@ -19,13 +19,68 @@
   font-weight: 600;
 }
 
+.discreet {
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--cal-2);
+}
+
+.discreet p {
+  margin: 0;
+  max-width: 480px;
+}
+
+.discreet button {
+  font-size: 14px;
+  color: var(--cal-2);
+}
+
 .actions {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+/* .linkButton trae align-self: flex-start (para columnas); en esta fila va centrado. */
+.actions > button {
+  align-self: center;
+}
+
 .actions .button {
   padding: 10px 18px;
   font-size: 15px;
+}
+
+.progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.progress svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--albero);
+}
+
+/* Mientras instala, la estrella late despacio: es la única señal de que algo está pasando. */
+.pulse {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
 }

@@ -6,6 +6,11 @@
 - Commits pequeños, uno por fase como mínimo. No avances a la siguiente fase sin
   cumplir su resultado verificable.
 - No metas dependencias sin justificarlas.
+- Git flow: `main` es producción (cada push a `main` con el CI en verde despliega en el
+  VPS) y `develop` es la rama de integración. Cada cambio va en su rama desde `develop`
+  (`feat/…`, `fix/…`, `chore/…`, `docs/…`) y entra por pull request a `develop`, con
+  merge commit. Para publicar: rama `release/x.y.z` desde `develop`, PR a `main`, tag
+  `vx.y.z` y vuelta a `develop`. Urgencias en producción: `hotfix/…` desde `main`.
 - Tengo que poder explicar todo el código en una entrevista: prefiere soluciones
   simples y legibles a soluciones ingeniosas.
 - React Router (v8) y Vite (v8) pueden diferir de lo que conoces: consulta
@@ -69,8 +74,6 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
   del producto, después de la v1.
 - App nativa. Opcional después de Navidad, reutilizando la API.
 - Cuentas, email, recuperación por SMS, varios idiomas.
-- Gestionar bajas después del sorteo (en la v1, el organizador repite el sorteo
-  solo si nadie ha visto todavía su resultado).
 
 ## Stack y decisiones
 - Monorepo: apps/web (Vite + React + TypeScript, pnpm) y apps/api (FastAPI,
@@ -124,6 +127,9 @@ Fecha límite de la v1: usable con un grupo real antes del 1 de diciembre.
 - Asignación aleatoria en la que nadie se toca a sí mismo y se respetan
   las exclusiones (simétricas).
 - Backtracking aleatorizado; con grupos de hasta 50 personas es suficiente.
+- Bajas después del sorteo (`close_gap`): quien regalaba a la persona que se va pasa a
+  regalar a quien ella regalaba. Si eso no vale (exclusión o pareja de dos), se cruza con
+  otra pareja al azar. Cambian dos personas como mucho y se les avisa por push.
 - Si no hay ninguna solución posible, devolver un error claro
   ("Ana no puede regalar a nadie con estas exclusiones").
 - Tests basados en propiedades con Hypothesis: biyección, sin autoasignaciones,
@@ -173,8 +179,9 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
   borde. Sin sombras ni degradados decorativos.
 - Texto: frases en minúscula, sin etiquetas en mayúsculas y sin flechas en los
   botones.
-- Movimiento: la luz que recorre la celosía del inicio y las hojas que se abren
-  en el revelado (con su sombra resbalando sobre el nombre). Nada más.
+- Movimiento: la luz que recorre la celosía del inicio, las hojas que se abren
+  en el revelado (con su sombra resbalando sobre el nombre) y las escenas de «así
+  funciona» en la portada, que cambian con el scroll. Nada más.
   Respetar prefers-reduced-motion.
 - Referencia: boceto interactivo de la celosía (inicio, revelado y chat),
   elegido el 10-nov-2026 entre tres propuestas.

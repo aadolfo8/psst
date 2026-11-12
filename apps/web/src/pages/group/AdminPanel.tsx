@@ -9,6 +9,8 @@ import {
   type GuessStatus,
   type ParticipantPublic,
 } from "../../lib/api/client";
+import { WhatsAppIcon } from "../../components/WhatsAppIcon";
+import { inviteUrl } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
 import g from "./group.module.css";
 import UnmaskDialog from "./UnmaskDialog";
@@ -55,6 +57,22 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
     );
   }
 
+  function removeParticipant(id: string) {
+    return run(() =>
+      api.DELETE("/groups/{slug}/participants/{participant_id}", {
+        params: { path: { slug: group.slug, participant_id: id } },
+      }),
+    );
+  }
+
+  function withdrawParticipant(id: string) {
+    return run(() =>
+      api.POST("/groups/{slug}/participants/{participant_id}/withdraw", {
+        params: { path: { slug: group.slug, participant_id: id } },
+      }),
+    );
+  }
+
   function setStatus(status: "open" | "closed") {
     run(() => api.PATCH("/groups/{slug}", { ...path, body: { status } }));
   }
@@ -67,6 +85,7 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const isDrawn = group.status === "drawn";
   const unmasked = group.unmasked_at != null;
   const seen = participants.filter((p) => p.has_revealed).length;
+  const others = participants.filter((p) => !p.is_admin);
 
   return (
     <section className={g.admin} aria-labelledby="admin-title">
@@ -88,6 +107,16 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             ? "Cualquiera con el enlace puede unirse. Ciérralas cuando estéis todos."
             : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
+        {!isDrawn && others.length > 0 && (
+          <PeopleAction
+            summary="quitar a alguien"
+            hint="Por si alguien se ha apuntado dos veces o por error. Se borran también sus exclusiones."
+            confirm="sí, quitar"
+            people={others}
+            sending={sending}
+            onConfirm={removeParticipant}
+          />
+        )}
         <div className={g.actions}>
           {isOpen && (
             <Link className={ui.ghost} to={`/g/${group.slug}/compartir`}>
@@ -130,14 +159,7 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
                     onClick={() => removeExclusion(e.id)}
                     aria-label={`quitar la exclusión entre ${e.participant_a.name} y ${e.participant_b.name}`}
                   >
-                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                      <path
-                        d="M3 3l8 8M11 3l-8 8"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <CrossIcon />
                   </button>
                 )}
               </li>
@@ -182,6 +204,17 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             hacer el sorteo
           </button>
         )}
+        {isDrawn && seen < participants.length && <DrawnNotice group={group} />}
+        {isDrawn && !unmasked && others.length > 0 && (
+          <PeopleAction
+            summary="alguien no puede ir"
+            hint="Se le quita del sorteo y quien le regalaba pasa a regalar a otra persona (casi siempre solo cambia esa). Las conversaciones de las parejas que cambian se pierden y se avisa a quien tiene que volver a mirar."
+            confirm="sí, quitarle"
+            people={others}
+            sending={sending}
+            onConfirm={withdrawParticipant}
+          />
+        )}
         {isDrawn && seen === 0 && (
           <button type="button" className={ui.ghost} disabled={sending} onClick={makeDraw}>
             repetir el sorteo
@@ -212,6 +245,109 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * Tras el sorteo: a quien tenga los avisos activados le llega una push, pero a la mayoría
+ * hay que decírselo. El mensaje de WhatsApp ya va redactado, con el enlace del grupo.
+ */
+function DrawnNotice({ group }: { group: GroupPublic }) {
+  const message = `Ya está hecho el sorteo de "${group.name}". Entra con tu nombre y tu PIN para descubrir a quién le regalas: ${inviteUrl(group.slug)}`;
+  return (
+    <div className={g.drawnNotice}>
+      <p className={ui.hint}>
+        Avisa al grupo de que ya pueden entrar. A quien tenga los avisos activados le ha
+        llegado uno.
+      </p>
+      <a
+        className={ui.button}
+        href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <WhatsAppIcon />
+        avisar por WhatsApp
+      </a>
+    </div>
+  );
+}
+
+type PeopleActionProps = {
+  summary: string;
+  hint: string;
+  confirm: string;
+  people: ParticipantPublic[];
+  sending: boolean;
+  onConfirm: (id: string) => Promise<void>;
+};
+
+/**
+ * Lista plegada con una ✕ por persona. Al pulsarla se pide confirmación en la misma fila,
+ * sin diálogos del navegador. Sirve para quitar a alguien antes del sorteo y después.
+ */
+function PeopleAction({ summary, hint, confirm, people, sending, onConfirm }: PeopleActionProps) {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  async function handleConfirm(id: string) {
+    await onConfirm(id);
+    setSelected(null);
+  }
+
+  return (
+    <details className={g.removeList}>
+      <summary>{summary}</summary>
+      <p className={ui.hint}>{hint}</p>
+      <ul className={g.pairs}>
+        {people.map((p) => (
+          <li key={p.id} className={g.pair}>
+            {selected === p.id ? (
+              <>
+                <span>¿quitar a {p.name}?</span>
+                <span className={g.confirm}>
+                  <button
+                    type="button"
+                    className={ui.linkButton}
+                    disabled={sending}
+                    onClick={() => handleConfirm(p.id)}
+                  >
+                    {confirm}
+                  </button>
+                  <button
+                    type="button"
+                    className={ui.linkButton}
+                    onClick={() => setSelected(null)}
+                  >
+                    cancelar
+                  </button>
+                </span>
+              </>
+            ) : (
+              <>
+                <span>{p.name}</span>
+                <button
+                  type="button"
+                  className={g.remove}
+                  disabled={sending}
+                  onClick={() => setSelected(p.id)}
+                  aria-label={`${summary}: ${p.name}`}
+                >
+                  <CrossIcon />
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function CrossIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Assignment
 from tests.conftest import create_group, join
+from tests.test_push import subscribe
 
 NAMES = ["Luis", "Marta", "Pablo"]
 
@@ -220,3 +221,119 @@ async def test_nobody_learns_who_gives_to_whom(group) -> None:
     receiver_id = revealed.json()["receiver"]["id"]
     others = set(ids.values()) - {ids["Luis"], receiver_id}
     assert not any(other in revealed.text for other in others)
+
+
+# --- aviso del sorteo ----------------------------------------------------------------------
+
+
+async def test_first_draw_pushes_everyone_but_the_organizer(group, sent) -> None:
+    slug, clients = group["slug"], group["clients"]
+    await subscribe(clients["Ana"], slug, "https://push.example/ana")
+    await subscribe(clients["Luis"], slug, "https://push.example/luis")
+    await close(group)
+
+    assert (await draw(group)).status_code == 200
+
+    assert [call["endpoint"] for call in sent] == ["https://push.example/luis"]
+    assert f"/g/{slug}/revelado" in sent[0]["data"]
+    # El aviso no dice a quién le regalas.
+    assert not any(name in sent[0]["data"] for name in NAMES)
+
+
+async def test_repeated_draw_does_not_push_again(group, sent) -> None:
+    await subscribe(group["clients"]["Luis"], group["slug"])
+    await close(group)
+    await draw(group)
+
+    assert (await draw(group)).status_code == 200
+
+    assert len(sent) == 1
+
+
+# --- baja después del sorteo ---------------------------------------------------------------
+
+
+async def withdraw(group, name: str):
+    return await group["admin"].post(
+        f"/groups/{group['slug']}/participants/{group['ids'][name]}/withdraw"
+    )
+
+
+async def gives_to(db: AsyncSession) -> dict[str, str]:
+    rows = await db.scalars(select(Assignment))
+    return {str(a.giver_id): str(a.receiver_id) for a in rows}
+
+
+async def test_withdraw_after_draw_keeps_a_valid_draw(group, db, sent) -> None:
+    await close(group)
+    await draw(group)
+    before = await gives_to(db)
+    luis = group["ids"]["Luis"]
+
+    response = await withdraw(group, "Luis")
+
+    assert response.status_code == 200
+    after = await gives_to(db)
+    rest = {group["ids"][n] for n in ["Ana", "Marta", "Pablo"]}
+    assert set(after) == rest and set(after.values()) == rest
+    assert all(giver != receiver for giver, receiver in after.items())
+    # Quien le regalaba a Luis tiene destinatario nuevo y, como mucho, cambia otra persona.
+    # (Si Luis y alguien se regalaban entre sí, no se puede cerrar el hueco directamente y
+    # se cruza con otra pareja.)
+    orphan = next(g for g, r in before.items() if r == luis)
+    assert after[orphan] != luis
+    changed = [g for g in after if before[g] != after[g]]
+    assert orphan in changed and len(changed) <= 2
+    if orphan != before[luis]:
+        assert after[orphan] == before[luis]
+
+
+async def test_withdrawn_person_loses_their_session(group) -> None:
+    await close(group)
+    await draw(group)
+
+    await withdraw(group, "Luis")
+
+    response = await group["clients"]["Luis"].get(f"/groups/{group['slug']}/me")
+    assert response.status_code == 401
+
+
+async def test_withdraw_pushes_whoever_has_a_new_person(group, db, sent) -> None:
+    slug, clients = group["slug"], group["clients"]
+    await close(group)
+    await draw(group)
+    before = await gives_to(db)
+    orphan = next(g for g, r in before.items() if r == group["ids"]["Luis"])
+    orphan_name = next(n for n, i in group["ids"].items() if i == orphan)
+    await subscribe(clients[orphan_name], slug, "https://push.example/orphan")
+
+    await withdraw(group, "Luis")
+
+    assert [call["endpoint"] for call in sent] == ["https://push.example/orphan"]
+    assert "/revelado" in sent[0]["data"]
+    assert not any(name in sent[0]["data"] for name in ["Ana", *NAMES])
+
+
+async def test_withdraw_needs_three_people_left(client, new_client) -> None:
+    ana = await create_group(client)
+    slug = ana["group"]["slug"]
+    async with new_client() as luis, new_client() as marta:
+        luis_id = (await join(luis, slug, "Luis"))["id"]
+        await join(marta, slug, "Marta")
+        await client.patch(f"/groups/{slug}", json={"status": "closed"})
+        await client.post(f"/groups/{slug}/draw")
+
+        response = await client.post(f"/groups/{slug}/participants/{luis_id}/withdraw")
+
+    assert response.status_code == 422
+
+
+async def test_only_admin_withdraws_and_only_after_draw(group) -> None:
+    path = f"/groups/{group['slug']}/participants/{group['ids']['Marta']}/withdraw"
+    assert (await group["admin"].post(path)).status_code == 409  # sin sorteo
+
+    await close(group)
+    await draw(group)
+
+    assert (await group["clients"]["Luis"].post(path)).status_code == 403
+    assert (await withdraw(group, "Ana")).status_code == 409  # el organizador no se va

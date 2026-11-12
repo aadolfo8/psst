@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from app.draw import DrawImpossible, draw_assignments
+from app.draw import DrawImpossible, close_gap, draw_assignments
 
 
 def names(n: int) -> dict[str, str]:
@@ -116,3 +116,65 @@ def test_fifty_people_is_fast() -> None:
 
     assert time.perf_counter() - start < 1
     assert_valid(people, exclusions, result)
+
+
+# --- baja después del sorteo (close_gap) ---------------------------------------------------
+
+
+@settings(max_examples=300, deadline=None)
+@given(groups(min_size=4, max_size=12), st.data())
+def test_close_gap_keeps_a_valid_draw_without_the_leaving_person(group, data) -> None:
+    people, exclusions, seed = group
+    try:
+        gives_to = draw_assignments(people, exclusions, Random(seed))
+    except DrawImpossible:
+        return
+    leaving = data.draw(st.sampled_from(sorted(people)))
+    rest = {p: n for p, n in people.items() if p != leaving}
+
+    try:
+        result = close_gap(gives_to, leaving, exclusions, Random(seed))
+    except DrawImpossible:
+        return  # puede no haber forma tocando solo dos parejas: lo comprueba el test siguiente
+
+    assert_valid(rest, exclusions, result)
+    # Como mucho cambian dos personas que ya estaban: quien regalaba al que se va y otra.
+    changed = [g for g in result if gives_to[g] != result[g]]
+    assert len(changed) <= 2
+
+
+@settings(max_examples=300, deadline=None)
+@given(groups(min_size=4, max_size=12), st.data())
+def test_close_gap_without_exclusions_always_works(group, data) -> None:
+    people, _, seed = group
+    gives_to = draw_assignments(people, set(), Random(seed))
+    leaving = data.draw(st.sampled_from(sorted(people)))
+
+    result = close_gap(gives_to, leaving, set(), Random(seed))
+
+    assert_valid({p: n for p, n in people.items() if p != leaving}, set(), result)
+
+
+def test_close_gap_joins_the_two_ends_when_possible() -> None:
+    gives_to = {"ana": "xavi", "xavi": "luis", "luis": "pepe", "pepe": "ana"}
+
+    result = close_gap(gives_to, "ana", set(), Random(0))
+
+    assert result == {"xavi": "luis", "luis": "pepe", "pepe": "xavi"}
+
+
+def test_close_gap_when_the_leaving_person_was_a_pair_of_two() -> None:
+    # Ana y Xavi se regalaban entre sí: Xavi se queda sin destinatario y sin quien le regale.
+    gives_to = {"ana": "xavi", "xavi": "ana", "luis": "pepe", "pepe": "marta", "marta": "luis"}
+
+    result = close_gap(gives_to, "ana", set(), Random(0))
+
+    rest = {p: p for p in ["xavi", "luis", "pepe", "marta"]}
+    assert_valid(rest, set(), result)
+
+
+def test_close_gap_needs_three_people_left() -> None:
+    gives_to = {"ana": "luis", "luis": "pepe", "pepe": "ana"}
+
+    with pytest.raises(DrawImpossible):
+        close_gap(gives_to, "ana", set(), Random(0))

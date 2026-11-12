@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router";
 
+import InstallPrompt from "../../components/InstallPrompt";
+import { LatticeWindow } from "../../components/LatticeWindow";
 import { api, errorMessage, type RevealedReceiver } from "../../lib/api/client";
 import { groupDetails } from "../../lib/format";
 import ui from "../../styles/ui.module.css";
@@ -11,7 +13,7 @@ import r from "./reveal.module.css";
 /**
  * A quién le regalas. El nombre está detrás de dos hojas de celosía; al pulsar se pide a la
  * API, se pinta desenfocado detrás de las hojas y estas se abren (ver reveal.module.css).
- * Si ya lo habías visto, la ventana sale abierta y sin animación.
+ * Si ya lo habías visto, sale detrás de una celosía que solo deja leer donde pasas el dedo.
  */
 export default function Reveal() {
   const { me, receiver: alreadySeen } = useLoaderData<typeof revealLoader>();
@@ -49,20 +51,26 @@ export default function Reveal() {
       {group.demo && <DemoBar me={me} />}
       <h1 className={ui.title}>te toca regalar a</h1>
 
-      <div className={windowClass}>
-        {receiver && (
-          <span className={r.name} aria-live="polite">
-            {receiver.name}
-          </span>
-        )}
-        {(!receiver || opening) && (
-          <>
-            <div className={`${ui.lattice} ${r.leaf} ${r.left}`} aria-hidden="true" />
-            <div className={`${ui.lattice} ${r.leaf} ${r.right}`} aria-hidden="true" />
-            <div className={`${ui.lattice} ${r.shadow}`} aria-hidden="true" />
-          </>
-        )}
-      </div>
+      {receiver && !opening ? (
+        // Ya lo habías visto: el nombre sigue detrás de la celosía y solo se lee donde pasas
+        // el dedo, por si lo abres delante de alguien.
+        <>
+          <LatticeWindow hiddenName={receiver.name} wander={false} className={r.peek} />
+          <span className={ui.srOnly}>{receiver.name}</span>
+          <p className={ui.hint}>Pasa el dedo para leerlo. Al soltar se vuelve a tapar.</p>
+        </>
+      ) : (
+        <div className={windowClass}>
+          {receiver && (
+            <span className={r.name} aria-live="polite">
+              {receiver.name}
+            </span>
+          )}
+          <div className={`${ui.lattice} ${r.leaf} ${r.left}`} aria-hidden="true" />
+          <div className={`${ui.lattice} ${r.leaf} ${r.right}`} aria-hidden="true" />
+          <div className={`${ui.lattice} ${r.shadow}`} aria-hidden="true" />
+        </div>
+      )}
 
       {!receiver && (
         <>
@@ -109,6 +117,7 @@ export default function Reveal() {
           </div>
         </div>
       )}
+      <InstallPrompt footer="always" />
     </main>
   );
 }
