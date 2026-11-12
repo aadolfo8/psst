@@ -6,6 +6,11 @@
 - Commits pequeños, uno por fase como mínimo. No avances a la siguiente fase sin
   cumplir su resultado verificable.
 - No metas dependencias sin justificarlas.
+- Git flow: `main` es producción (cada push a `main` con el CI en verde despliega en el
+  VPS) y `develop` es la rama de integración. Cada cambio va en su rama desde `develop`
+  (`feat/…`, `fix/…`, `chore/…`, `docs/…`) y entra por pull request a `develop`, con
+  merge commit. Para publicar: rama `release/x.y.z` desde `develop`, PR a `main`, tag
+  `vx.y.z` y vuelta a `develop`. Urgencias en producción: `hotfix/…` desde `main`.
 - Tengo que poder explicar todo el código en una entrevista: prefiere soluciones
   simples y legibles a soluciones ingeniosas.
 - React Router (v8) y Vite (v8) pueden diferir de lo que conoces: consulta
