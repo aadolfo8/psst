@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLoaderData, useNavigate } from "react-router";
 
 import { DateField } from "../components/DateField";
@@ -10,6 +10,7 @@ import { slugFromInput } from "../lib/groupSlug";
 import { isInstalled } from "../lib/platform";
 import ui from "../styles/ui.module.css";
 import styles from "./Home.module.css";
+import HowItWorks from "./HowItWorks";
 import type { homeLoader } from "./loaders";
 
 const STATUS_LABEL: Record<GroupPublic["status"], string> = {
@@ -39,6 +40,9 @@ export default function Home() {
             El amigo invisible por enlace, con un chat secreto entre quien regala y quien recibe.
             Sin cuentas: un nombre y un PIN.
           </p>
+          <a href="#como-funciona" className={styles.howLink}>
+            ver cómo funciona
+          </a>
           <InstallPrompt />
           {groups.length > 0 && <MyGroups groups={groups} />}
           {/* La app instalada no comparte sesión con el navegador en iPhone: ahí no hay grupos
@@ -47,10 +51,69 @@ export default function Home() {
         </div>
         <CreateGroupForm />
       </main>
+      <HowItWorks />
+      <section id="empezar" className={styles.finale}>
+        <h2 className={styles.title}>
+          ¿empezamos? <em>tarda un minuto.</em>
+        </h2>
+        <div className={styles.finaleActions}>
+          <button type="button" className={ui.button} onClick={goToForm}>
+            crear tu grupo
+          </button>
+          <Link to="/demo" className={ui.ghost}>
+            probar la demo
+          </Link>
+        </div>
+      </section>
+      <FloatingCreate />
       <div className={styles.footer}>
         <InstallPrompt footer="after-dismiss" />
       </div>
     </div>
+  );
+}
+
+/** Sube al formulario de crear grupo y pone el cursor en el primer campo. */
+function goToForm() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById("crear")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+  document.getElementById("group-name")?.focus({ preventScroll: true });
+}
+
+/**
+ * Botón flotante para crear el grupo: sale cuando ni el formulario ni la llamada del final
+ * están a la vista, para que siempre haya a mano por dónde empezar.
+ */
+function FloatingCreate() {
+  const [hidden, setHidden] = useState(true);
+
+  useEffect(() => {
+    const targets = ["crear", "empezar"]
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    const visible = new Set<Element>();
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.add(entry.target);
+        else visible.delete(entry.target);
+      }
+      setHidden(visible.size > 0);
+    });
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <button
+      type="button"
+      className={`${ui.button} ${styles.floating}`}
+      data-hidden={hidden}
+      tabIndex={hidden ? -1 : 0}
+      aria-hidden={hidden}
+      onClick={goToForm}
+    >
+      crea tu grupo
+    </button>
   );
 }
 
@@ -143,12 +206,13 @@ function CreateGroupForm() {
   }
 
   return (
-    <form className={`${ui.block} ${styles.form}`} onSubmit={handleSubmit}>
+    <form id="crear" className={`${ui.block} ${styles.form}`} onSubmit={handleSubmit}>
       <h2 className={ui.subtitle}>crea tu grupo</h2>
 
       <label className={ui.field}>
         nombre del grupo
         <input
+          id="group-name"
           className={ui.input}
           name="name"
           required

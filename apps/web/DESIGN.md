@@ -75,7 +75,10 @@ se acaba de descubrir.
 
 Solo dos momentos: la luz que recorre la celosía del inicio y las hojas que se abren en el
 revelado. Los mensajes nuevos del chat entran con un pequeño salto (0,45 s) y, mientras el
-navegador instala la app, la estrella del aviso late despacio. Todo respeta
+navegador instala la app, la estrella del aviso late despacio. En la portada, «así funciona»
+cuenta el producto en cinco escenas que cambian con el scroll (aparecen piezas, se abren
+hojas, se desvanecen celosías), siempre en respuesta a lo que hace quien mira y nunca en
+bucle. Todo respeta
 `prefers-reduced-motion`.
 
 ## Texto
