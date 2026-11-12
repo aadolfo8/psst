@@ -103,9 +103,7 @@ async def test_only_admin_removes_participants(lobby) -> None:
 
 
 async def test_admin_cannot_remove_themselves(lobby) -> None:
-    response = await lobby["admin"].delete(
-        f"/groups/{lobby['slug']}/participants/{lobby['ana']}"
-    )
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['ana']}")
 
     assert response.status_code == 409
 
@@ -114,9 +112,7 @@ async def test_remove_participant_from_another_group_is_404(lobby, new_client) -
     async with new_client() as other_admin:
         other = await create_group(other_admin)
 
-    response = await lobby["admin"].delete(
-        f"/groups/{lobby['slug']}/participants/{other['id']}"
-    )
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{other['id']}")
 
     assert response.status_code == 404
 
@@ -124,9 +120,7 @@ async def test_remove_participant_from_another_group_is_404(lobby, new_client) -
 async def test_cannot_remove_participants_after_draw(lobby, db) -> None:
     await set_status(db, lobby["slug"], "drawn")
 
-    response = await lobby["admin"].delete(
-        f"/groups/{lobby['slug']}/participants/{lobby['luis']}"
-    )
+    response = await lobby["admin"].delete(f"/groups/{lobby['slug']}/participants/{lobby['luis']}")
 
     assert response.status_code == 409
 
