@@ -277,9 +277,15 @@ async def test_withdraw_after_draw_keeps_a_valid_draw(group, db, sent) -> None:
     rest = {group["ids"][n] for n in ["Ana", "Marta", "Pablo"]}
     assert set(after) == rest and set(after.values()) == rest
     assert all(giver != receiver for giver, receiver in after.items())
-    # Quien le regalaba a Luis ahora regala a quien regalaba Luis.
+    # Quien le regalaba a Luis tiene destinatario nuevo y, como mucho, cambia otra persona.
+    # (Si Luis y alguien se regalaban entre sí, no se puede cerrar el hueco directamente y
+    # se cruza con otra pareja.)
     orphan = next(g for g, r in before.items() if r == luis)
-    assert after[orphan] == before[luis]
+    assert after[orphan] != luis
+    changed = [g for g in after if before[g] != after[g]]
+    assert orphan in changed and len(changed) <= 2
+    if orphan != before[luis]:
+        assert after[orphan] == before[luis]
 
 
 async def test_withdrawn_person_loses_their_session(group) -> None:
