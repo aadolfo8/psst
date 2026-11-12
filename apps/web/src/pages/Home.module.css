@@ -33,6 +33,12 @@
   gap: 28px;
 }
 
+.footer {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 var(--gutter) 40px;
+}
+
 .intro {
   display: flex;
   flex-direction: column;

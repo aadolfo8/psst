@@ -125,6 +125,7 @@ export default function Lobby({ me, participants, exclusions, unread, guess }: P
           guess={guess}
         />
       )}
+      <InstallPrompt footer="after-dismiss" />
     </main>
   );
 }
