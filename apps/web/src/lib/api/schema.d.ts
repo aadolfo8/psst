@@ -127,6 +127,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/participants/{participant_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Participant
+         * @description El organizador quita a alguien antes del sorteo (por ejemplo, si se apuntó dos veces).
+         *
+         *     Se borra con un DELETE directo para que la base de datos borre en cascada sus sesiones,
+         *     exclusiones y suscripciones push. Al perder la sesión, esa persona vuelve a ver la
+         *     pantalla de unirse.
+         */
+        delete: operations["remove_participant_groups__slug__participants__participant_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups/{slug}/me/wishlist": {
         parameters: {
             query?: never;
@@ -1021,6 +1045,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupPublic"][];
+                };
+            };
+        };
+    };
+    remove_participant_groups__slug__participants__participant_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                participant_id: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

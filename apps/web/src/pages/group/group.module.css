@@ -550,3 +550,41 @@
   outline: 2px solid var(--albero);
   outline-offset: 2px;
 }
+
+/* ---------- Quitar a alguien (panel del organizador) ---------- */
+
+.removeList summary {
+  width: fit-content;
+  font-size: 15px;
+  color: var(--cal);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
+
+.removeList summary:hover {
+  color: var(--albero);
+}
+
+.removeList[open] summary {
+  margin-bottom: 10px;
+}
+
+.removeList .pairs {
+  margin-top: 10px;
+}
+
+/* Confirmación en la misma fila: misma altura que con la ✕, para que no salte. */
+.confirm {
+  margin-left: auto;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 8px;
+}
+
+.confirm > button {
+  align-self: center;
+}

@@ -3,7 +3,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
@@ -50,6 +50,32 @@ async def list_participants(
         )
         for p, revealed_at in rows
     ]
+
+
+@router.delete("/participants/{participant_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_participant(
+    participant_id: uuid.UUID, current: CurrentAdminDep, db: DbSession
+) -> Response:
+    """El organizador quita a alguien antes del sorteo (por ejemplo, si se apuntó dos veces).
+
+    Se borra con un DELETE directo para que la base de datos borre en cascada sus sesiones,
+    exclusiones y suscripciones push. Al perder la sesión, esa persona vuelve a ver la
+    pantalla de unirse.
+    """
+    ensure_not_drawn(current.group)
+    if participant_id == current.participant.id:
+        raise HTTPException(status.HTTP_409_CONFLICT, "no puedes quitarte a ti del grupo")
+
+    result = await db.execute(
+        delete(Participant).where(
+            Participant.id == participant_id, Participant.group_id == current.group.id
+        )
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "esa persona no está en el grupo")
+
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/me/wishlist")

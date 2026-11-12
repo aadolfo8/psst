@@ -25,6 +25,8 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const { revalidate } = useRevalidator();
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // A quién se va a quitar: se pide confirmación en la misma fila antes de borrar.
+  const [removing, setRemoving] = useState<string | null>(null);
   const path = { params: { path: { slug: group.slug } } };
 
   /** Ejecuta una llamada a la API y, si va bien, recarga los datos de la sala. */
@@ -55,6 +57,15 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
     );
   }
 
+  async function removeParticipant(id: string) {
+    await run(() =>
+      api.DELETE("/groups/{slug}/participants/{participant_id}", {
+        params: { path: { slug: group.slug, participant_id: id } },
+      }),
+    );
+    setRemoving(null);
+  }
+
   function setStatus(status: "open" | "closed") {
     run(() => api.PATCH("/groups/{slug}", { ...path, body: { status } }));
   }
@@ -67,6 +78,7 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const isDrawn = group.status === "drawn";
   const unmasked = group.unmasked_at != null;
   const seen = participants.filter((p) => p.has_revealed).length;
+  const others = participants.filter((p) => !p.is_admin);
 
   return (
     <section className={g.admin} aria-labelledby="admin-title">
@@ -88,6 +100,56 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             ? "Cualquiera con el enlace puede unirse. Ciérralas cuando estéis todos."
             : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
+        {!isDrawn && others.length > 0 && (
+          <details className={g.removeList}>
+            <summary>quitar a alguien</summary>
+            <p className={ui.hint}>
+              Por si alguien se ha apuntado dos veces o por error. Se borran también sus
+              exclusiones.
+            </p>
+            <ul className={g.pairs}>
+              {others.map((p) => (
+                <li key={p.id} className={g.pair}>
+                  {removing === p.id ? (
+                    <>
+                      <span>¿quitar a {p.name}?</span>
+                      <span className={g.confirm}>
+                        <button
+                          type="button"
+                          className={ui.linkButton}
+                          disabled={sending}
+                          onClick={() => removeParticipant(p.id)}
+                        >
+                          sí, quitar
+                        </button>
+                        <button
+                          type="button"
+                          className={ui.linkButton}
+                          onClick={() => setRemoving(null)}
+                        >
+                          cancelar
+                        </button>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{p.name}</span>
+                      <button
+                        type="button"
+                        className={g.remove}
+                        disabled={sending}
+                        onClick={() => setRemoving(p.id)}
+                        aria-label={`quitar a ${p.name} del grupo`}
+                      >
+                        <CrossIcon />
+                      </button>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <div className={g.actions}>
           {isOpen && (
             <Link className={ui.ghost} to={`/g/${group.slug}/compartir`}>
@@ -130,14 +192,7 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
                     onClick={() => removeExclusion(e.id)}
                     aria-label={`quitar la exclusión entre ${e.participant_a.name} y ${e.participant_b.name}`}
                   >
-                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                      <path
-                        d="M3 3l8 8M11 3l-8 8"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <CrossIcon />
                   </button>
                 )}
               </li>
@@ -212,6 +267,14 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
         </p>
       )}
     </section>
+  );
+}
+
+function CrossIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 

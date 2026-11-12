@@ -358,6 +358,52 @@
         }
       }
     },
+    "/groups/{slug}/participants/{participant_id}": {
+      "delete": {
+        "tags": [
+          "lobby"
+        ],
+        "summary": "Remove Participant",
+        "description": "El organizador quita a alguien antes del sorteo (por ejemplo, si se apuntó dos veces).\n\nSe borra con un DELETE directo para que la base de datos borre en cascada sus sesiones,\nexclusiones y suscripciones push. Al perder la sesión, esa persona vuelve a ver la\npantalla de unirse.",
+        "operationId": "remove_participant_groups__slug__participants__participant_id__delete",
+        "parameters": [
+          {
+            "name": "participant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Participant Id"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{slug}/me/wishlist": {
       "put": {
         "tags": [
