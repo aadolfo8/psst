@@ -19,8 +19,9 @@ Detalle completo en `apps/web/DESIGN.md`. Resumen:
   borde. Sin sombras ni degradados decorativos.
 - Texto: frases en minúscula, sin etiquetas en mayúsculas y sin flechas en los
   botones.
-- Movimiento: la luz que recorre la celosía del inicio y las hojas que se abren
-  en el revelado (con su sombra resbalando sobre el nombre). Nada más.
+- Movimiento: la luz que recorre la celosía del inicio, las hojas que se abren
+  en el revelado (con su sombra resbalando sobre el nombre) y las escenas de «así
+  funciona» en la portada, que cambian con el scroll. Nada más.
   Respetar prefers-reduced-motion.
 - Referencia: boceto interactivo de la celosía (inicio, revelado y chat),
   elegido el 10-nov-2026 entre tres propuestas.
