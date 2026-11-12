@@ -74,7 +74,8 @@ se acaba de descubrir.
 ## Movimiento
 
 Solo dos momentos: la luz que recorre la celosía del inicio y las hojas que se abren en el
-revelado. Los mensajes nuevos del chat entran con un pequeño salto (0,45 s). Todo respeta
+revelado. Los mensajes nuevos del chat entran con un pequeño salto (0,45 s) y, mientras el
+navegador instala la app, la estrella del aviso late despacio. Todo respeta
 `prefers-reduced-motion`.
 
 ## Texto
