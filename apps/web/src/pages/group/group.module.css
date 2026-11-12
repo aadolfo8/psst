@@ -517,3 +517,36 @@
 .dialog input {
   background-color: var(--sombra);
 }
+
+/* ---------- Unirse: soy nuevo / ya estoy dentro ---------- */
+
+.modeSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radio-pildora);
+  background: var(--sombra);
+}
+
+.modeSwitch button {
+  padding: 12px 10px;
+  border: 0;
+  border-radius: var(--radio-pildora);
+  background: transparent;
+  color: var(--cal-2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modeSwitch button[aria-pressed="true"] {
+  background: var(--cal);
+  color: var(--sombra);
+}
+
+.modeSwitch button:focus-visible {
+  outline: 2px solid var(--albero);
+  outline-offset: 2px;
+}
