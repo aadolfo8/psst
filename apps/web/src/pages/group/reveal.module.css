@@ -159,3 +159,13 @@
   font-size: 16px;
   line-height: 1.55;
 }
+
+/* Al volver a entrar: la celosía del inicio, del tamaño de esta ventana y con una luz más
+   pequeña, para que haya que recorrer el nombre y no se lea de un vistazo. */
+.peek {
+  --window-height: clamp(200px, 56vw, 250px);
+  --window-radius: var(--radio-bloque);
+  --window-name-size: clamp(54px, 16vw, 88px);
+  --window-hint-left: 14px;
+  --window-spot: 40px;
+}
