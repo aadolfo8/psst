@@ -43,6 +43,18 @@
   mask-composite: intersect;
 }
 
+/* Lo contrario de la luz: oscuro en toda la ventana menos en el círculo. */
+.veil {
+  position: absolute;
+  inset: 0;
+  background: var(--sombra);
+  mask: radial-gradient(
+    circle at var(--x) var(--y),
+    transparent 0 var(--window-spot, 64px),
+    #000 calc(var(--window-spot, 64px) + 54px)
+  );
+}
+
 .hint {
   position: absolute;
   /* alineado con la columna de contenido de la página (máx. 1040 px) */

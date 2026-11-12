@@ -88,6 +88,9 @@ export function LatticeWindow({ hiddenName, wander = true, className }: Props) {
       aria-hidden="true"
     >
       <span className={styles.name}>{hiddenName}</span>
+      {/* Sin paseo, un velo tapa también lo que asoma por los huecos: fuera de la luz no se
+          lee ni un trozo del nombre. */}
+      {!wander && <div className={styles.veil} />}
       <div className={styles.lattice} />
       <span className={styles.hint}>pasa el dedo</span>
     </div>
