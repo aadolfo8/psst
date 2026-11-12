@@ -588,3 +588,15 @@
 .confirm > button {
   align-self: center;
 }
+
+/* ---------- Aviso tras el sorteo ---------- */
+
+.drawnNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawnNotice svg {
+  margin-right: 8px;
+}

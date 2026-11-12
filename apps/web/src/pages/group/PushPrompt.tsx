@@ -5,16 +5,34 @@ import { enablePush, getPushState, type PushState } from "../../lib/push";
 import ui from "../../styles/ui.module.css";
 import c from "./chat.module.css";
 
-const DISMISSED_KEY = "psst-push-dismissed";
+// "Ahora no" se recuerda aparte en el chat y en la sala: son preguntas distintas.
+const DISMISSED_KEY = { chat: "psst-push-dismissed", lobby: "psst-push-dismissed-lobby" };
+
+type Props = {
+  slug: string;
+  /** La pregunta en negrita: cambia según lo que vayamos a avisar. */
+  question?: string;
+  /**
+   * En la sala: no repite cómo instalar la app (ya lo dice su propio aviso) y, si la app está
+   * instalada, sale como hoja flotante abajo, lo primero que ves al abrirla.
+   */
+  where?: "chat" | "lobby";
+  floating?: boolean;
+};
 
 /**
- * Invita a activar los avisos push. Se enseña en el chat cuando ya has recibido algún
- * mensaje: ahí es donde se entiende para qué sirven. En iPhone solo funcionan con la web
- * instalada en la pantalla de inicio, así que primero explica cómo instalarla.
+ * Invita a activar los avisos push. En el chat sale cuando ya has recibido algún mensaje; en
+ * la sala, desde el principio, para avisar del sorteo. En iPhone solo funcionan con la web
+ * instalada en la pantalla de inicio, así que en el chat primero explica cómo instalarla.
  */
-export default function PushPrompt({ slug }: { slug: string }) {
+export default function PushPrompt({
+  slug,
+  question = "¿Te avisamos cuando te escriban?",
+  where = "chat",
+  floating = false,
+}: Props) {
   const [state, setState] = useState<PushState | "loading">("loading");
-  const [dismissed, setDismissed] = useState(() => remembered());
+  const [dismissed, setDismissed] = useState(() => remembered(DISMISSED_KEY[where]));
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
 
@@ -23,6 +41,7 @@ export default function PushPrompt({ slug }: { slug: string }) {
   }, []);
 
   if (dismissed || state === "loading" || state === "on" || state === "unsupported") return null;
+  if (where === "lobby" && state !== "off") return null;
 
   async function enable() {
     setWorking(true);
@@ -39,12 +58,12 @@ export default function PushPrompt({ slug }: { slug: string }) {
   }
 
   function dismiss() {
-    remember();
+    remember(DISMISSED_KEY[where]);
     setDismissed(true);
   }
 
   return (
-    <aside className={c.prompt}>
+    <aside className={floating ? `${c.prompt} ${c.floating}` : c.prompt}>
       {state === "needs-install" ? (
         <>
           <p>
@@ -67,8 +86,7 @@ export default function PushPrompt({ slug }: { slug: string }) {
       ) : (
         <>
           <p>
-            <strong>¿Te avisamos cuando te escriban?</strong> Solo recibirás un aviso por
-            mensaje, nada más.
+            <strong>{question}</strong> Solo te avisaremos de lo importante, nada más.
           </p>
           {error && (
             <p className={ui.error} role="alert">
@@ -95,17 +113,17 @@ export default function PushPrompt({ slug }: { slug: string }) {
 }
 
 // "Ahora no" se recuerda en este navegador; si no, la pregunta volvería en cada visita.
-function remembered(): boolean {
+function remembered(key: string): boolean {
   try {
-    return localStorage.getItem(DISMISSED_KEY) === "1";
+    return localStorage.getItem(key) === "1";
   } catch {
     return false;
   }
 }
 
-function remember() {
+function remember(key: string) {
   try {
-    localStorage.setItem(DISMISSED_KEY, "1");
+    localStorage.setItem(key, "1");
   } catch {
     // Sin almacenamiento (modo privado): simplemente volverá a preguntar.
   }

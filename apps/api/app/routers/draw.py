@@ -8,6 +8,7 @@ from sqlalchemy import delete, func, select
 from app.deps import CurrentAdminDep, CurrentParticipantDep, DbSession
 from app.draw import DrawImpossible, draw_assignments
 from app.models import Assignment, Exclusion, Group, Participant
+from app.push import notify
 from app.schemas import GroupPublic, Reveal, RevealedReceiver
 
 router = APIRouter(prefix="/groups/{slug}", tags=["draw"])
@@ -36,6 +37,7 @@ async def make_draw(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
     )
     assert group is not None
 
+    first_draw = group.status == "closed"
     if group.status == "open":
         raise HTTPException(
             status.HTTP_409_CONFLICT, "cierra antes las inscripciones para hacer el sorteo"
@@ -79,7 +81,22 @@ async def make_draw(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
     )
     group.status = "drawn"
     await db.commit()
+
+    # Aviso a todos menos al organizador, que es quien lo ha hecho. Solo la primera vez:
+    # si se repite es porque nadie lo había mirado todavía, y ya tienen el aviso.
+    if first_draw:
+        for participant_id in participants:
+            if participant_id != group.admin_participant_id:
+                await notify(db, participant_id, draw_push_payload(group))
     return GroupPublic.model_validate(group)
+
+
+def draw_push_payload(group: Group) -> dict[str, str]:
+    return {
+        "title": "Ya está el sorteo",
+        "body": f"Entra en «{group.name}» y descubre a quién le regalas",
+        "url": f"/g/{group.slug}/revelado",
+    }
 
 
 @router.post("/me/reveal")
