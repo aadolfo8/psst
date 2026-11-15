@@ -693,6 +693,89 @@
         }
       }
     },
+    "/groups/{slug}/late-spot": {
+      "post": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Open Late Spot",
+        "description": "Guarda un sitio para alguien que llega después del sorteo.\n\nMientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra\nen el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.",
+        "operationId": "open_late_spot_groups__slug__late_spot_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Close Late Spot",
+        "operationId": "close_late_spot_groups__slug__late_spot_delete",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{slug}/me/reveal": {
       "post": {
         "tags": [
@@ -1594,6 +1677,11 @@
               }
             ],
             "title": "Unmasked At"
+          },
+          "late_spot_open": {
+            "type": "boolean",
+            "title": "Late Spot Open",
+            "default": false
           }
         },
         "type": "object",

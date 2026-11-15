@@ -215,6 +215,14 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
             onConfirm={withdrawParticipant}
           />
         )}
+        {isDrawn && !unmasked && (
+          <LateSpot
+            group={group}
+            sending={sending}
+            onOpen={() => run(() => api.POST("/groups/{slug}/late-spot", path))}
+            onClose={() => run(() => api.DELETE("/groups/{slug}/late-spot", path))}
+          />
+        )}
         {isDrawn && seen === 0 && (
           <button type="button" className={ui.ghost} disabled={sending} onClick={makeDraw}>
             repetir el sorteo
@@ -270,6 +278,60 @@ function DrawnNotice({ group }: { group: GroupPublic }) {
         avisar por WhatsApp
       </a>
     </div>
+  );
+}
+
+type LateSpotProps = {
+  group: GroupPublic;
+  sending: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+};
+
+/**
+ * Alguien se quedó sin apuntar. El organizador le guarda un sitio y le pasa el enlace: al
+ * unirse entra en el sorteo cambiando solo a una persona que aún no había mirado.
+ */
+function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
+  const message = `Te he guardado un sitio en el amigo invisible "${group.name}". Entra, elige tu nombre y un PIN y descubre a quién le regalas: ${inviteUrl(group.slug)}`;
+
+  if (group.late_spot_open) {
+    return (
+      <div className={g.drawnNotice}>
+        <p className={ui.hint}>
+          Hay un sitio guardado. Pásale el enlace: en cuanto se una entra en el sorteo y el
+          sitio se cierra.
+        </p>
+        <div className={g.actions}>
+          <a
+            className={ui.button}
+            href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <WhatsAppIcon />
+            enviarle el enlace
+          </a>
+          <button type="button" className={ui.ghost} disabled={sending} onClick={onClose}>
+            cerrar el sitio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <details className={g.removeList}>
+      <summary>falta alguien por apuntarse</summary>
+      <p className={ui.hint}>
+        Le guardas un sitio y entra con el enlace del grupo. Pasará a regalarle alguien que
+        todavía no ha mirado su resultado, así que nadie que ya lo haya visto tiene que volver
+        a mirar. Hacen falta al menos dos personas que no lo hayan visto.
+      </p>
+      <button type="button" className={ui.ghost} disabled={sending} onClick={onOpen}>
+        guardarle un sitio
+      </button>
+    </details>
   );
 }
 

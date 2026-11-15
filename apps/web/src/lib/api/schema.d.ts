@@ -251,6 +251,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/late-spot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Late Spot
+         * @description Guarda un sitio para alguien que llega después del sorteo.
+         *
+         *     Mientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra
+         *     en el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.
+         */
+        post: operations["open_late_spot_groups__slug__late_spot_post"];
+        /** Close Late Spot */
+        delete: operations["close_late_spot_groups__slug__late_spot_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups/{slug}/me/reveal": {
         parameters: {
             query?: never;
@@ -616,6 +640,11 @@ export interface components {
             demo: boolean;
             /** Unmasked At */
             unmasked_at?: string | null;
+            /**
+             * Late Spot Open
+             * @default false
+             */
+            late_spot_open: boolean;
         };
         /** GroupStatusUpdate */
         GroupStatusUpdate: {
@@ -1271,6 +1300,68 @@ export interface operations {
             header?: never;
             path: {
                 participant_id: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_late_spot_groups__slug__late_spot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_late_spot_groups__slug__late_spot_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
                 slug: string;
             };
             cookie?: never;

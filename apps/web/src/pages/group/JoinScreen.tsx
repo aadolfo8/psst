@@ -16,7 +16,9 @@ type Mode = "join" | "login";
  */
 export default function JoinScreen({ group }: { group: GroupPublic }) {
   const { revalidate } = useRevalidator();
-  const isOpen = group.status === "open";
+  // Después del sorteo el organizador puede guardar un sitio a alguien que se quedó fuera.
+  const late = group.status === "drawn" && group.late_spot_open;
+  const isOpen = group.status === "open" || late;
   // Con las inscripciones cerradas solo tiene sentido volver a entrar.
   const [mode, setMode] = useState<Mode>(isOpen ? "join" : "login");
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,9 @@ export default function JoinScreen({ group }: { group: GroupPublic }) {
         <h2 className={ui.subtitle}>{mode === "join" ? "únete al grupo" : "vuelve a entrar"}</h2>
         <p className={ui.hint}>
           {mode === "join"
-            ? "Es la primera vez que entras: elige tu nombre y un PIN."
+            ? late
+              ? "El sorteo ya está hecho, pero te han guardado un sitio: elige tu nombre y un PIN y descubrirás a quién le regalas."
+              : "Es la primera vez que entras: elige tu nombre y un PIN."
             : "Ya te apuntaste antes, en este móvil o en otro: entra con el mismo nombre y PIN."}
         </p>
         <label className={ui.field}>
