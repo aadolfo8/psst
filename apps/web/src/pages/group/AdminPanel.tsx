@@ -84,6 +84,8 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const isOpen = group.status === "open";
   const isDrawn = group.status === "drawn";
   const unmasked = group.unmasked_at != null;
+  // Tras el sorteo, un sitio guardado deja entrar a una persona más (ver LateSpot).
+  const lateSpot = isDrawn && group.late_spot_open;
   const seen = participants.filter((p) => p.has_revealed).length;
   const others = participants.filter((p) => !p.is_admin);
 
@@ -98,14 +100,16 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
       <div className={g.adminPart}>
         <div className={g.partHead}>
           <h3 className={ui.subtitle}>inscripciones</h3>
-          <span className={g.state} data-open={isOpen}>
-            {isOpen ? "abiertas" : "cerradas"}
+          <span className={g.state} data-open={isOpen || lateSpot}>
+            {isOpen ? "abiertas" : lateSpot ? "un sitio guardado" : "cerradas"}
           </span>
         </div>
         <p className={ui.hint}>
           {isOpen
             ? "Cualquiera con el enlace puede unirse. Ciérralas cuando estéis todos."
-            : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
+            : lateSpot
+              ? "Solo puede entrar una persona más: la primera que se una con el enlace ocupa el sitio que le has guardado."
+              : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
         {!isDrawn && others.length > 0 && (
           <PeopleAction
@@ -303,8 +307,9 @@ function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
           sitio se cierra.
         </p>
         <div className={g.actions}>
+          {/* En secundario: la acción principal del bloque ya es avisar al grupo. */}
           <a
-            className={ui.button}
+            className={ui.ghost}
             href={`https://wa.me/?text=${encodeURIComponent(message)}`}
             target="_blank"
             rel="noreferrer"
@@ -312,7 +317,7 @@ function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
             <WhatsAppIcon />
             enviarle el enlace
           </a>
-          <button type="button" className={ui.ghost} disabled={sending} onClick={onClose}>
+          <button type="button" className={ui.linkButton} disabled={sending} onClick={onClose}>
             cerrar el sitio
           </button>
         </div>
