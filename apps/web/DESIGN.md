@@ -76,10 +76,11 @@ se acaba de descubrir.
 Solo dos momentos: la luz que recorre la celosía del inicio y las hojas que se abren en el
 revelado. Los mensajes nuevos del chat entran con un pequeño salto (0,45 s) y, mientras el
 navegador instala la app, la estrella del aviso late despacio. En la portada, «así funciona»
-cuenta el producto en cinco escenas que cambian con el scroll (aparecen piezas, se abren
-hojas, se desvanecen celosías), siempre en respuesta a lo que hace quien mira y nunca en
-bucle. Todo respeta
-`prefers-reduced-motion`.
+cuenta el producto en cinco escenas: la pantalla se queda fija durante cinco pantallas de
+scroll, con la escena a casi todo el tamaño, su frase debajo y cinco estrellas de progreso
+arriba. Al bajar cambian juntas la escena y la frase (la luz recorre el enlace, aparecen
+piezas, se abren hojas, se desvanecen celosías), siempre en respuesta a lo que hace quien
+mira y nunca en bucle. Todo respeta `prefers-reduced-motion`.
 
 ## Texto
 
