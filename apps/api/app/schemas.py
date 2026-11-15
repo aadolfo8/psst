@@ -63,8 +63,8 @@ class GroupPublic(BaseModel):
     demo: bool = False
     # Cuándo se quitaron las celosías; null mientras sigan puestas.
     unmasked_at: datetime | None = None
-    # Hay un sitio guardado para alguien que llega después del sorteo.
-    late_spot_open: bool = False
+    # Se puede entrar después del sorteo (mientras quede hueco).
+    late_join_open: bool = False
 
 
 class Me(BaseModel):

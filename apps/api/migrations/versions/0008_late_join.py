@@ -1,4 +1,4 @@
-"""late spot
+"""late join
 
 Revision ID: 0008
 Revises: 0007
@@ -22,10 +22,10 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.add_column(
         "groups",
-        sa.Column("late_spot_open", sa.Boolean(), server_default="false", nullable=False),
+        sa.Column("late_join_open", sa.Boolean(), server_default="false", nullable=False),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_column("groups", "late_spot_open")
+    op.drop_column("groups", "late_join_open")

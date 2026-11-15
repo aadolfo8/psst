@@ -114,11 +114,11 @@ async def join_group(
     slug: str, data: ParticipantCredentials, response: Response, db: DbSession
 ) -> Me:
     group = await get_group_or_404(db, slug)
-    # Después del sorteo solo se entra si el organizador ha guardado un sitio.
-    late = group.status == "drawn" and group.late_spot_open
+    # Después del sorteo solo se entra si el organizador lo ha permitido (y queda hueco).
+    late = group.status == "drawn" and group.late_join_open
     if late:
         group = await lock_drawn_group(db, group.id)
-        late = group.late_spot_open  # puede que otra persona lo haya ocupado justo antes
+        late = group.late_join_open  # puede que el organizador lo haya cerrado justo antes
     if group.status != "open" and not late:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "las inscripciones de este grupo están cerradas"

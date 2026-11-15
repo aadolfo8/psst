@@ -9,11 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import CurrentAdminDep, CurrentParticipantDep, DbSession
 from app.draw import (
-    NO_LATE_SPOT,
+    NO_LATE_ROOM,
     DrawImpossible,
     close_gap,
     draw_assignments,
-    has_late_spot,
+    has_late_room,
     insert_late,
 )
 from app.models import Assignment, Exclusion, Group, Participant
@@ -201,32 +201,33 @@ async def lock_drawn_group(db: AsyncSession, group_id: uuid.UUID) -> Group:
     return group
 
 
-@router.post("/late-spot")
-async def open_late_spot(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
-    """Guarda un sitio para alguien que llega después del sorteo.
+@router.post("/late-join")
+async def open_late_join(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
+    """Deja entrar a gente que llega después del sorteo.
 
-    Mientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra
-    en el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.
+    Mientras esté abierto, quien tenga el enlace puede unirse y entra en el sorteo al momento
+    (ver `insert_late`). Puede entrar más de una persona, mientras quede hueco: cada alta lo
+    vuelve a comprobar. Solo se abre si ahora mismo lo hay.
     """
     group = await lock_drawn_group(db, current.group.id)
     gives_to, not_revealed = await current_draw(db, group)
-    if not has_late_spot(gives_to, not_revealed):
-        raise HTTPException(status.HTTP_409_CONFLICT, NO_LATE_SPOT)
-    group.late_spot_open = True
+    if not has_late_room(gives_to, not_revealed):
+        raise HTTPException(status.HTTP_409_CONFLICT, NO_LATE_ROOM)
+    group.late_join_open = True
     await db.commit()
     return GroupPublic.model_validate(group)
 
 
-@router.delete("/late-spot")
-async def close_late_spot(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
-    current.group.late_spot_open = False
+@router.delete("/late-join")
+async def close_late_join(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
+    current.group.late_join_open = False
     await db.commit()
     return GroupPublic.model_validate(current.group)
 
 
 async def place_late_joiner(db: AsyncSession, group: Group, newcomer: uuid.UUID) -> None:
-    """Mete en el sorteo a quien acaba de unirse y cierra el sitio. Lanza DrawImpossible si
-    ya no hay hueco. El grupo tiene que venir bloqueado (`lock_drawn_group`).
+    """Mete en el sorteo a quien acaba de unirse. Lanza DrawImpossible si ya no hay hueco.
+    El grupo tiene que venir bloqueado (`lock_drawn_group`).
 
     Pepe -> Xavi pasa a ser Pepe -> recién llegado -> Xavi. La fila de Pepe -> Xavi no se
     borra: se le cambia quién regala. Así los mensajes que Xavi ya había escrito a "quien te
@@ -244,7 +245,6 @@ async def place_late_joiner(db: AsyncSession, group: Group, newcomer: uuid.UUID)
         .values(giver_id=newcomer)
     )
     db.add(Assignment(group_id=group.id, giver_id=giver, receiver_id=newcomer))
-    group.late_spot_open = False
 
 
 @router.post("/me/reveal")

@@ -36,8 +36,9 @@ class Group(Base):
     demo: Mapped[bool] = mapped_column(default=False, server_default="false")
     # Cuándo quitó el organizador las celosías: desde entonces todos saben quién les regalaba.
     unmasked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # Tras el sorteo, el organizador puede dejar entrar a una persona más (ver insert_late).
-    late_spot_open: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # Tras el sorteo, el organizador puede dejar entrar a gente nueva mientras quede hueco
+    # (ver insert_late).
+    late_join_open: Mapped[bool] = mapped_column(default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

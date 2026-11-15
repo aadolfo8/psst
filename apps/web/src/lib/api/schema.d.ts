@@ -251,7 +251,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/groups/{slug}/late-spot": {
+    "/groups/{slug}/late-join": {
         parameters: {
             query?: never;
             header?: never;
@@ -261,15 +261,16 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Open Late Spot
-         * @description Guarda un sitio para alguien que llega después del sorteo.
+         * Open Late Join
+         * @description Deja entrar a gente que llega después del sorteo.
          *
-         *     Mientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra
-         *     en el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.
+         *     Mientras esté abierto, quien tenga el enlace puede unirse y entra en el sorteo al momento
+         *     (ver `insert_late`). Puede entrar más de una persona, mientras quede hueco: cada alta lo
+         *     vuelve a comprobar. Solo se abre si ahora mismo lo hay.
          */
-        post: operations["open_late_spot_groups__slug__late_spot_post"];
-        /** Close Late Spot */
-        delete: operations["close_late_spot_groups__slug__late_spot_delete"];
+        post: operations["open_late_join_groups__slug__late_join_post"];
+        /** Close Late Join */
+        delete: operations["close_late_join_groups__slug__late_join_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -641,10 +642,10 @@ export interface components {
             /** Unmasked At */
             unmasked_at?: string | null;
             /**
-             * Late Spot Open
+             * Late Join Open
              * @default false
              */
-            late_spot_open: boolean;
+            late_join_open: boolean;
         };
         /** GroupStatusUpdate */
         GroupStatusUpdate: {
@@ -1326,7 +1327,7 @@ export interface operations {
             };
         };
     };
-    open_late_spot_groups__slug__late_spot_post: {
+    open_late_join_groups__slug__late_join_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1357,7 +1358,7 @@ export interface operations {
             };
         };
     };
-    close_late_spot_groups__slug__late_spot_delete: {
+    close_late_join_groups__slug__late_join_delete: {
         parameters: {
             query?: never;
             header?: never;

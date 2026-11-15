@@ -71,7 +71,7 @@ async def test_get_group_returns_public_info(client: AsyncClient, new_client) ->
         "status": "open",
         "demo": False,
         "unmasked_at": None,
-        "late_spot_open": False,
+        "late_join_open": False,
     }
 
 

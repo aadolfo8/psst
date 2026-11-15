@@ -132,13 +132,13 @@ def close_gap[T](
 # ha mirado ya su resultado, y el único que no lo ha hecho sería el elegido.
 MIN_LATE_CANDIDATES = 2
 
-NO_LATE_SPOT = (
+NO_LATE_ROOM = (
     "casi todo el mundo ha visto ya su resultado; no queda hueco para nadie más sin rehacer"
     " el sorteo"
 )
 
 
-def has_late_spot[T](gives_to: Mapping[T, T], can_move: Iterable[T]) -> bool:
+def has_late_room[T](gives_to: Mapping[T, T], can_move: Iterable[T]) -> bool:
     """Si se puede meter a alguien más sin que cambie nadie que ya haya visto su resultado."""
     return len(set(can_move) & set(gives_to)) >= MIN_LATE_CANDIDATES
 
@@ -155,10 +155,13 @@ def insert_late[T](
     (`can_move`) y se parte en dos: Pepe -> recién llegado -> Xavi. Solo cambia Pepe, y como
     no lo había visto, para él es como si el sorteo hubiera salido así desde el principio.
 
+    Pueden llegar varias personas, una detrás de otra: quien acaba de entrar tampoco ha mirado
+    todavía, así que también puede ser el Pepe de la siguiente.
+
     No mira exclusiones: quien llega tarde no tiene ninguna (no existía cuando se pusieron).
     """
-    if not has_late_spot(gives_to, can_move):
-        raise DrawImpossible(NO_LATE_SPOT)
+    if not has_late_room(gives_to, can_move):
+        raise DrawImpossible(NO_LATE_ROOM)
 
     giver = rng.choice(sorted(set(can_move) & set(gives_to), key=str))  # Pepe
     result = dict(gives_to)

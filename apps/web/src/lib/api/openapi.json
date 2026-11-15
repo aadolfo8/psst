@@ -693,14 +693,14 @@
         }
       }
     },
-    "/groups/{slug}/late-spot": {
+    "/groups/{slug}/late-join": {
       "post": {
         "tags": [
           "draw"
         ],
-        "summary": "Open Late Spot",
-        "description": "Guarda un sitio para alguien que llega después del sorteo.\n\nMientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra\nen el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.",
-        "operationId": "open_late_spot_groups__slug__late_spot_post",
+        "summary": "Open Late Join",
+        "description": "Deja entrar a gente que llega después del sorteo.\n\nMientras esté abierto, quien tenga el enlace puede unirse y entra en el sorteo al momento\n(ver `insert_late`). Puede entrar más de una persona, mientras quede hueco: cada alta lo\nvuelve a comprobar. Solo se abre si ahora mismo lo hay.",
+        "operationId": "open_late_join_groups__slug__late_join_post",
         "parameters": [
           {
             "name": "slug",
@@ -739,8 +739,8 @@
         "tags": [
           "draw"
         ],
-        "summary": "Close Late Spot",
-        "operationId": "close_late_spot_groups__slug__late_spot_delete",
+        "summary": "Close Late Join",
+        "operationId": "close_late_join_groups__slug__late_join_delete",
         "parameters": [
           {
             "name": "slug",
@@ -1678,9 +1678,9 @@
             ],
             "title": "Unmasked At"
           },
-          "late_spot_open": {
+          "late_join_open": {
             "type": "boolean",
-            "title": "Late Spot Open",
+            "title": "Late Join Open",
             "default": false
           }
         },

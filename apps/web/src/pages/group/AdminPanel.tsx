@@ -84,8 +84,8 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
   const isOpen = group.status === "open";
   const isDrawn = group.status === "drawn";
   const unmasked = group.unmasked_at != null;
-  // Tras el sorteo, un sitio guardado deja entrar a una persona más (ver LateSpot).
-  const lateSpot = isDrawn && group.late_spot_open;
+  // Tras el sorteo se puede dejar entrar a gente nueva mientras quede hueco (ver LateJoin).
+  const lateJoin = isDrawn && group.late_join_open;
   const seen = participants.filter((p) => p.has_revealed).length;
   const others = participants.filter((p) => !p.is_admin);
 
@@ -100,15 +100,15 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
       <div className={g.adminPart}>
         <div className={g.partHead}>
           <h3 className={ui.subtitle}>inscripciones</h3>
-          <span className={g.state} data-open={isOpen || lateSpot}>
-            {isOpen ? "abiertas" : lateSpot ? "un sitio guardado" : "cerradas"}
+          <span className={g.state} data-open={isOpen || lateJoin}>
+            {isOpen ? "abiertas" : lateJoin ? "de última hora" : "cerradas"}
           </span>
         </div>
         <p className={ui.hint}>
           {isOpen
             ? "Cualquiera con el enlace puede unirse. Ciérralas cuando estéis todos."
-            : lateSpot
-              ? "Solo puede entrar una persona más: la primera que se una con el enlace ocupa el sitio que le has guardado."
+            : lateJoin
+              ? "Quien tenga el enlace puede unirse y entra directamente en el sorteo, mientras quede gente sin mirar su resultado. Ciérralas cuando estéis todos."
               : "Nadie nuevo puede unirse; el enlace solo sirve para volver a entrar."}
         </p>
         {!isDrawn && others.length > 0 && (
@@ -220,11 +220,11 @@ export default function AdminPanel({ group, participants, exclusions, guess }: P
           />
         )}
         {isDrawn && !unmasked && (
-          <LateSpot
+          <LateJoin
             group={group}
             sending={sending}
-            onOpen={() => run(() => api.POST("/groups/{slug}/late-spot", path))}
-            onClose={() => run(() => api.DELETE("/groups/{slug}/late-spot", path))}
+            onOpen={() => run(() => api.POST("/groups/{slug}/late-join", path))}
+            onClose={() => run(() => api.DELETE("/groups/{slug}/late-join", path))}
           />
         )}
         {isDrawn && seen === 0 && (
@@ -285,7 +285,7 @@ function DrawnNotice({ group }: { group: GroupPublic }) {
   );
 }
 
-type LateSpotProps = {
+type LateJoinProps = {
   group: GroupPublic;
   sending: boolean;
   onOpen: () => void;
@@ -293,18 +293,19 @@ type LateSpotProps = {
 };
 
 /**
- * Alguien se quedó sin apuntar. El organizador le guarda un sitio y le pasa el enlace: al
- * unirse entra en el sorteo cambiando solo a una persona que aún no había mirado.
+ * Alguien se quedó sin apuntar. El organizador abre la entrada de última hora y le pasa el
+ * enlace: cada persona que se une entra en el sorteo cambiando solo a alguien que aún no
+ * había mirado. Puede entrar más de una mientras quede hueco.
  */
-function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
-  const message = `Te he guardado un sitio en el amigo invisible "${group.name}". Entra, elige tu nombre y un PIN y descubre a quién le regalas: ${inviteUrl(group.slug)}`;
+function LateJoin({ group, sending, onOpen, onClose }: LateJoinProps) {
+  const message = `Aún puedes apuntarte al amigo invisible "${group.name}". Entra, elige tu nombre y un PIN y descubre a quién le regalas: ${inviteUrl(group.slug)}`;
 
-  if (group.late_spot_open) {
+  if (group.late_join_open) {
     return (
       <div className={g.drawnNotice}>
         <p className={ui.hint}>
-          Hay un sitio guardado. Pásale el enlace: en cuanto se una entra en el sorteo y el
-          sitio se cierra.
+          Pásale el enlace a quien falte: al unirse entra directamente en el sorteo. Si ya
+          no queda hueco, se le dirá al intentarlo.
         </p>
         <div className={g.actions}>
           {/* En secundario: la acción principal del bloque ya es avisar al grupo. */}
@@ -315,10 +316,10 @@ function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
             rel="noreferrer"
           >
             <WhatsAppIcon />
-            enviarle el enlace
+            enviar el enlace
           </a>
           <button type="button" className={ui.linkButton} disabled={sending} onClick={onClose}>
-            cerrar el sitio
+            cerrar la entrada
           </button>
         </div>
       </div>
@@ -329,12 +330,13 @@ function LateSpot({ group, sending, onOpen, onClose }: LateSpotProps) {
     <details className={g.removeList}>
       <summary>falta alguien por apuntarse</summary>
       <p className={ui.hint}>
-        Le guardas un sitio y entra con el enlace del grupo. Pasará a regalarle alguien que
-        todavía no ha mirado su resultado, así que nadie que ya lo haya visto tiene que volver
-        a mirar. Hacen falta al menos dos personas que no lo hayan visto.
+        Abre la entrada y quien falte se une con el enlace del grupo. A cada persona nueva
+        pasará a regalarle alguien que todavía no ha mirado su resultado, así que nadie que
+        ya lo haya visto tiene que volver a mirar. Hacen falta al menos dos personas que no
+        lo hayan visto.
       </p>
       <button type="button" className={ui.ghost} disabled={sending} onClick={onOpen}>
-        guardarle un sitio
+        dejar entrar a más gente
       </button>
     </details>
   );
