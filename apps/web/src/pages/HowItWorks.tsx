@@ -13,7 +13,7 @@ const STEPS: Step[] = [
   },
   {
     title: "cada uno entra con su nombre y un PIN",
-    text: "Sin cuentas, sin email y sin teléfono. Cada persona escribe su lista de deseos para darte pistas.",
+    text: "Sin cuentas, sin email y sin teléfono. Cada persona escribe su lista de deseos para dar pistas.",
     scene: <JoinScene />,
   },
   {
@@ -34,28 +34,26 @@ const STEPS: Step[] = [
 ];
 
 /**
- * "Así funciona": una ventana fija que cambia de escena según bajas. El paso activo se
- * calcula con el scroll y su escena se anima solo con CSS (data-active). Con movimiento
- * reducido no se anima nada.
+ * "Así funciona": una pista de cinco pantallas de alto con una pantalla fija dentro. Arriba,
+ * el título y el progreso; en el centro, la escena del paso activo a todo tamaño; debajo, su
+ * frase. El paso activo sale de cuánto se ha recorrido la pista, y cada escena se anima solo
+ * con CSS (data-active). Con movimiento reducido no se anima nada.
  */
 export default function HowItWorks() {
   const [active, setActive] = useState(0);
-  const steps = useRef<(HTMLLIElement | null)[]>([]);
+  const track = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // El paso activo es el último cuyo borde de arriba ya ha pasado una línea de la pantalla.
-    // En escritorio la línea va al 40 %; en el móvil, al 65 %, justo debajo de la ventana fija.
     // Se calcula en cada scroll (una vez por fotograma), así funciona también si saltas.
     let frame = 0;
     function update() {
       frame = 0;
-      const wide = window.matchMedia("(min-width: 860px)").matches;
-      const line = window.innerHeight * (wide ? 0.4 : 0.65);
-      let current = 0;
-      steps.current.forEach((step, i) => {
-        if (step && step.getBoundingClientRect().top < line) current = i;
-      });
-      setActive(current);
+      const el = track.current;
+      if (!el) return;
+      const { top, height } = el.getBoundingClientRect();
+      const run = height - window.innerHeight;
+      const progress = Math.min(0.999, Math.max(0, -top / run));
+      setActive(Math.floor(progress * STEPS.length));
     }
     function onScroll() {
       if (!frame) frame = requestAnimationFrame(update);
@@ -71,38 +69,32 @@ export default function HowItWorks() {
   }, []);
 
   return (
-    <section id="como-funciona" className={s.story} aria-labelledby="how-title">
-      <h2 id="how-title" className={s.heading}>
-        así funciona
-      </h2>
-      <div className={s.layout}>
-        <div className={s.stage} aria-hidden="true">
-          {STEPS.map((step, i) => (
-            <div key={step.title} className={s.scene} data-active={i === active}>
-              {step.scene}
-            </div>
-          ))}
-          <div className={s.progress}>
+    <section id="como-funciona" ref={track} className={s.track} aria-labelledby="how-title">
+      <div className={s.screen}>
+        <div className={s.top}>
+          <h2 id="how-title" className={s.heading}>
+            así funciona
+          </h2>
+          <div className={s.progress} aria-hidden="true">
             {STEPS.map((step, i) => (
               <span key={step.title} data-active={i === active} />
             ))}
           </div>
         </div>
 
-        <ol className={s.steps}>
+        <div className={s.stage} aria-hidden="true">
           {STEPS.map((step, i) => (
-            <li
-              key={step.title}
-              ref={(el) => {
-                steps.current[i] = el;
-              }}
-              data-step={i}
-              data-active={i === active}
-              className={s.step}
-            >
-              <span className={s.number}>{i + 1}</span>
-              <h3 className={s.stepTitle}>{step.title}</h3>
-              <p className={s.stepText}>{step.text}</p>
+            <div key={step.title} className={s.scene} data-active={i === active}>
+              {step.scene}
+            </div>
+          ))}
+        </div>
+
+        <ol className={s.captions}>
+          {STEPS.map((step, i) => (
+            <li key={step.title} className={s.caption} data-active={i === active}>
+              <h3 className={s.captionTitle}>{step.title}</h3>
+              <p className={s.captionText}>{step.text}</p>
             </li>
           ))}
         </ol>
@@ -118,27 +110,17 @@ function order(i: number): CSSProperties {
   return { "--i": i } as CSSProperties;
 }
 
+/** El enlace detrás de una celosía: una luz lo recorre y luego se abre del todo. */
 function ShareScene() {
-  const words = 'Te apunto al amigo invisible "Familia". Entra con tu nombre y un PIN:'.split(" ");
   return (
-    <div className={s.phone}>
-      <span className={s.chatName}>familia</span>
-      <p className={`${s.bubble} ${s.mine}`}>
-        {words.map((word, i) => (
-          <span key={i} className={s.word} style={order(i)}>
-            {word}{" "}
-          </span>
-        ))}
-        <span
-          className={`${s.word} ${s.link}`}
-          style={order(words.length)}
-        >
-          psst.hidan.es/g/k3f9
-        </span>
+    <div className={s.share}>
+      <div className={s.linkWindow}>
+        <span className={s.link}>psst.hidan.es/g/k3f9</span>
+        <span className={s.light} />
+      </div>
+      <p className={s.message}>
+        «Te apunto al amigo invisible <b>familia</b>. Entra con tu nombre y un PIN»
       </p>
-      <span className={s.sent} style={order(words.length + 2)}>
-        enviado
-      </span>
     </div>
   );
 }
@@ -146,7 +128,7 @@ function ShareScene() {
 function JoinScene() {
   const people = ["Ana", "Luis", "Marta", "Pablo", "Lucía", "Mario"];
   return (
-    <div className={s.phone}>
+    <div className={s.join}>
       <div className={s.people}>
         {people.map((name, i) => (
           <span key={name} className={s.person} style={order(i)}>
@@ -166,8 +148,8 @@ function JoinScene() {
 
 function RevealScene() {
   return (
-    <div className={s.phone}>
-      <span className={s.revealLabel}>te toca regalar a</span>
+    <div className={s.reveal}>
+      <span className={s.label}>te toca regalar a</span>
       <div className={s.window}>
         <span className={s.revealName}>Mario</span>
         <span className={`${ui.lattice} ${s.leaf} ${s.left}`} />
@@ -177,17 +159,23 @@ function RevealScene() {
   );
 }
 
+/** El chat como lo ve quien recibe: quien le escribe es solo una celosía. */
 function ChatScene() {
   const lines: { text: string; mine: boolean }[] = [
-    { text: "¿Qué talla de camiseta usas?", mine: true },
-    { text: "Una M. ¿Quién eres?", mine: false },
-    { text: "Eso no te lo puedo decir", mine: true },
+    { text: "¿Qué talla de camiseta usas?", mine: false },
+    { text: "Una M. ¿Quién eres?", mine: true },
+    { text: "Eso no te lo puedo decir", mine: false },
   ];
   return (
-    <div className={s.phone}>
+    <div className={s.chat}>
       <div className={s.chatHead}>
-        <span className={`${ui.lattice} ${s.avatar}`} />
-        <span>quien te regala</span>
+        <span className={s.avatarFrame}>
+          <span className={`${ui.lattice} ${s.avatar}`} />
+        </span>
+        <span>
+          quien te regala
+          <small className={s.chatSub}>así lo ve Mario</small>
+        </span>
       </div>
       {lines.map((line, i) => (
         <p
@@ -198,8 +186,10 @@ function ChatScene() {
           {line.text}
         </p>
       ))}
-      <span className={s.typing} style={order(lines.length)}>
-        escribiendo…
+      <span className={`${s.typing} ${s.pop}`} style={order(lines.length)}>
+        <span />
+        <span />
+        <span />
       </span>
     </div>
   );
@@ -212,16 +202,16 @@ function UnmaskScene() {
     ["Marta", "Ana"],
   ];
   return (
-    <div className={s.phone}>
-      <span className={s.revealLabel}>quién regalaba a quién</span>
+    <div className={s.unmask}>
+      <span className={s.label}>quién regalaba a quién</span>
       <ul className={s.results}>
         {rows.map(([giver, receiver], i) => (
-          <li key={giver} style={order(i)}>
-            <span className={s.resultGiver}>
+          <li key={giver}>
+            <span className={s.resultGiver} style={order(i)}>
               {giver}
               <span className={`${ui.lattice} ${s.cover}`} />
             </span>
-            <span className={s.arrow}>regalaba a</span>
+            <span className={s.giftTo}>regalaba a</span>
             <span>{receiver}</span>
           </li>
         ))}
