@@ -4,10 +4,18 @@ import uuid
 from random import SystemRandom
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import CurrentAdminDep, CurrentParticipantDep, DbSession
-from app.draw import DrawImpossible, close_gap, draw_assignments
+from app.draw import (
+    NO_LATE_SPOT,
+    DrawImpossible,
+    close_gap,
+    draw_assignments,
+    has_late_spot,
+    insert_late,
+)
 from app.models import Assignment, Exclusion, Group, Participant
 from app.push import notify
 from app.schemas import GroupPublic, Reveal, RevealedReceiver
@@ -166,12 +174,90 @@ def reassigned_push_payload(group: Group) -> dict[str, str]:
     }
 
 
+async def current_draw(
+    db: AsyncSession, group: Group
+) -> tuple[dict[uuid.UUID, uuid.UUID], set[uuid.UUID]]:
+    """El reparto actual ({quien regala: a quien}) y quiénes no han mirado todavía el suyo."""
+    assignments = list(await db.scalars(select(Assignment).where(Assignment.group_id == group.id)))
+    gives_to = {a.giver_id: a.receiver_id for a in assignments}
+    not_revealed = {a.giver_id for a in assignments if a.revealed_at is None}
+    return gives_to, not_revealed
+
+
+async def lock_drawn_group(db: AsyncSession, group_id: uuid.UUID) -> Group:
+    """Relee el grupo bloqueándolo. Las altas tardías, las bajas y los revelados (que lo
+    bloquean en modo compartido) se hacen así de una en una y no se pisan."""
+    group = await db.scalar(
+        select(Group)
+        .where(Group.id == group_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    assert group is not None
+    if group.status != "drawn":
+        raise HTTPException(status.HTTP_409_CONFLICT, "todavía no se ha hecho el sorteo")
+    if group.unmasked_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "las celosías ya están quitadas")
+    return group
+
+
+@router.post("/late-spot")
+async def open_late_spot(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
+    """Guarda un sitio para alguien que llega después del sorteo.
+
+    Mientras esté abierto, una persona puede unirse con el enlace del grupo; al hacerlo entra
+    en el sorteo (ver `insert_late`) y el sitio se cierra. Solo se abre si hay hueco.
+    """
+    group = await lock_drawn_group(db, current.group.id)
+    gives_to, not_revealed = await current_draw(db, group)
+    if not has_late_spot(gives_to, not_revealed):
+        raise HTTPException(status.HTTP_409_CONFLICT, NO_LATE_SPOT)
+    group.late_spot_open = True
+    await db.commit()
+    return GroupPublic.model_validate(group)
+
+
+@router.delete("/late-spot")
+async def close_late_spot(current: CurrentAdminDep, db: DbSession) -> GroupPublic:
+    current.group.late_spot_open = False
+    await db.commit()
+    return GroupPublic.model_validate(current.group)
+
+
+async def place_late_joiner(db: AsyncSession, group: Group, newcomer: uuid.UUID) -> None:
+    """Mete en el sorteo a quien acaba de unirse y cierra el sitio. Lanza DrawImpossible si
+    ya no hay hueco. El grupo tiene que venir bloqueado (`lock_drawn_group`).
+
+    Pepe -> Xavi pasa a ser Pepe -> recién llegado -> Xavi. La fila de Pepe -> Xavi no se
+    borra: se le cambia quién regala. Así los mensajes que Xavi ya había escrito a "quien te
+    regala" (y que Pepe no ha podido leer, porque no había mirado) le llegan a quien de verdad
+    le regala ahora.
+    """
+    gives_to, not_revealed = await current_draw(db, group)
+    new = insert_late(gives_to, newcomer, not_revealed, _rng)
+    giver = next(g for g in gives_to if new[g] != gives_to[g])  # Pepe
+
+    # Primero el UPDATE y luego el INSERT, por las restricciones unique de giver y receiver.
+    await db.execute(
+        update(Assignment)
+        .where(Assignment.group_id == group.id, Assignment.giver_id == giver)
+        .values(giver_id=newcomer)
+    )
+    db.add(Assignment(group_id=group.id, giver_id=giver, receiver_id=newcomer))
+    group.late_spot_open = False
+
+
 @router.post("/me/reveal")
 async def reveal(current: CurrentParticipantDep, db: DbSession) -> Reveal:
     """A quién le regalas y su lista de deseos. La primera vez marca el resultado como visto.
 
     Es un POST porque tiene efecto: una vez visto, el organizador ya no puede repetir el sorteo.
     """
+    # Bloqueo compartido del grupo: varios pueden mirar a la vez, pero nadie mientras alguien
+    # entra tarde en el sorteo, que justo elige entre quienes no han mirado.
+    await db.execute(
+        select(Group.id).where(Group.id == current.group.id).with_for_update(read=True)
+    )
     assignment = await db.scalar(
         select(Assignment).where(Assignment.giver_id == current.participant.id)
     )

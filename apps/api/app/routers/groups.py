@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.deps import CurrentParticipantDep, DbSession
+from app.draw import DrawImpossible
 from app.models import Assignment, Group, Participant, ParticipantSession
+from app.routers.draw import lock_drawn_group, place_late_joiner
 from app.schemas import GroupCreate, GroupPublic, Me, ParticipantCredentials
 from app.security import (
     LOCKOUT_DURATION,
@@ -112,7 +114,12 @@ async def join_group(
     slug: str, data: ParticipantCredentials, response: Response, db: DbSession
 ) -> Me:
     group = await get_group_or_404(db, slug)
-    if group.status != "open":
+    # Después del sorteo solo se entra si el organizador ha guardado un sitio.
+    late = group.status == "drawn" and group.late_spot_open
+    if late:
+        group = await lock_drawn_group(db, group.id)
+        late = group.late_spot_open  # puede que otra persona lo haya ocupado justo antes
+    if group.status != "open" and not late:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "las inscripciones de este grupo están cerradas"
         )
@@ -128,6 +135,11 @@ async def join_group(
             status.HTTP_409_CONFLICT,
             "ya hay alguien con ese nombre en el grupo; si eres tú, entra con tu PIN",
         ) from None
+    if late:
+        try:
+            await place_late_joiner(db, group, participant.id)
+        except DrawImpossible as error:
+            raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from None
 
     token = open_session(db, participant)
     await db.commit()
