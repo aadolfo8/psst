@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from app.draw import DrawImpossible, close_gap, draw_assignments
+from app.draw import DrawImpossible, close_gap, draw_assignments, insert_late
 
 
 def names(n: int) -> dict[str, str]:
@@ -178,3 +178,45 @@ def test_close_gap_needs_three_people_left() -> None:
 
     with pytest.raises(DrawImpossible):
         close_gap(gives_to, "ana", set(), Random(0))
+
+
+# --- alguien que llega tarde (insert_late) -------------------------------------------------
+
+
+@settings(max_examples=300, deadline=None)
+@given(groups(min_size=3, max_size=12), st.data())
+def test_insert_late_only_changes_one_person_who_had_not_looked(group, data) -> None:
+    people, exclusions, seed = group
+    try:
+        gives_to = draw_assignments(people, exclusions, Random(seed))
+    except DrawImpossible:
+        return
+    can_move = data.draw(st.sets(st.sampled_from(sorted(people)), min_size=2))
+
+    result = insert_late(gives_to, "nuevo", can_move, Random(seed))
+
+    # Las exclusiones de antes se siguen cumpliendo; el nuevo no tiene ninguna.
+    assert_valid(people | {"nuevo": "Nuevo"}, exclusions, result)
+    changed = [g for g in gives_to if gives_to[g] != result[g]]
+    assert len(changed) == 1
+    assert changed[0] in can_move
+    assert result[changed[0]] == "nuevo"
+    assert result["nuevo"] == gives_to[changed[0]]
+
+
+def test_insert_late_needs_two_people_who_have_not_looked() -> None:
+    gives_to = {"ana": "luis", "luis": "pepe", "pepe": "ana"}
+
+    with pytest.raises(DrawImpossible, match="no queda hueco"):
+        insert_late(gives_to, "xavi", {"ana"}, Random(0))
+
+
+def test_insert_late_picks_among_all_candidates() -> None:
+    gives_to = {"ana": "luis", "luis": "pepe", "pepe": "ana"}
+
+    moved = {
+        next(g for g in gives_to if r[g] == "xavi")
+        for r in (insert_late(gives_to, "xavi", {"ana", "pepe"}, Random(s)) for s in range(30))
+    }
+
+    assert moved == {"ana", "pepe"}
