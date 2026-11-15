@@ -251,6 +251,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{slug}/late-join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Late Join
+         * @description Deja entrar a gente que llega después del sorteo.
+         *
+         *     Mientras esté abierto, quien tenga el enlace puede unirse y entra en el sorteo al momento
+         *     (ver `insert_late`). Puede entrar más de una persona, mientras quede hueco: cada alta lo
+         *     vuelve a comprobar. Solo se abre si ahora mismo lo hay.
+         */
+        post: operations["open_late_join_groups__slug__late_join_post"];
+        /** Close Late Join */
+        delete: operations["close_late_join_groups__slug__late_join_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups/{slug}/me/reveal": {
         parameters: {
             query?: never;
@@ -616,6 +641,11 @@ export interface components {
             demo: boolean;
             /** Unmasked At */
             unmasked_at?: string | null;
+            /**
+             * Late Join Open
+             * @default false
+             */
+            late_join_open: boolean;
         };
         /** GroupStatusUpdate */
         GroupStatusUpdate: {
@@ -1271,6 +1301,68 @@ export interface operations {
             header?: never;
             path: {
                 participant_id: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_late_join_groups__slug__late_join_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPublic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_late_join_groups__slug__late_join_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
                 slug: string;
             };
             cookie?: never;

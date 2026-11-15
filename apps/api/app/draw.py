@@ -126,3 +126,45 @@ def close_gap[T](
     raise DrawImpossible(
         "no hay forma de recolocar el sorteo sin esta persona con estas exclusiones"
     )
+
+
+# Con un solo candidato todos sabrían quién regala a quien llega tarde: la lista dice quién
+# ha mirado ya su resultado, y el único que no lo ha hecho sería el elegido.
+MIN_LATE_CANDIDATES = 2
+
+NO_LATE_ROOM = (
+    "casi todo el mundo ha visto ya su resultado; no queda hueco para nadie más sin rehacer"
+    " el sorteo"
+)
+
+
+def has_late_room[T](gives_to: Mapping[T, T], can_move: Iterable[T]) -> bool:
+    """Si se puede meter a alguien más sin que cambie nadie que ya haya visto su resultado."""
+    return len(set(can_move) & set(gives_to)) >= MIN_LATE_CANDIDATES
+
+
+def insert_late[T](
+    gives_to: Mapping[T, T],
+    newcomer: T,
+    can_move: Iterable[T],
+    rng: Random,
+) -> dict[T, T]:
+    """Mete a `newcomer` en un sorteo ya hecho tocando lo mínimo. Devuelve el reparto nuevo.
+
+    Se elige al azar una pareja Pepe -> Xavi en la que Pepe todavía no ha mirado su resultado
+    (`can_move`) y se parte en dos: Pepe -> recién llegado -> Xavi. Solo cambia Pepe, y como
+    no lo había visto, para él es como si el sorteo hubiera salido así desde el principio.
+
+    Pueden llegar varias personas, una detrás de otra: quien acaba de entrar tampoco ha mirado
+    todavía, así que también puede ser el Pepe de la siguiente.
+
+    No mira exclusiones: quien llega tarde no tiene ninguna (no existía cuando se pusieron).
+    """
+    if not has_late_room(gives_to, can_move):
+        raise DrawImpossible(NO_LATE_ROOM)
+
+    giver = rng.choice(sorted(set(can_move) & set(gives_to), key=str))  # Pepe
+    result = dict(gives_to)
+    result[newcomer] = gives_to[giver]  # el recién llegado regala a Xavi
+    result[giver] = newcomer
+    return result

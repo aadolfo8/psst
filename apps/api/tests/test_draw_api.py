@@ -95,6 +95,7 @@ async def test_draw_saves_assignments_without_revealing_them(group, db: AsyncSes
         "status",
         "demo",
         "unmasked_at",
+        "late_join_open",
     }
     assert response.json()["status"] == "drawn"
     assert await count_assignments(db) == 4
@@ -337,3 +338,143 @@ async def test_only_admin_withdraws_and_only_after_draw(group) -> None:
 
     assert (await group["clients"]["Luis"].post(path)).status_code == 403
     assert (await withdraw(group, "Ana")).status_code == 409  # el organizador no se va
+
+
+# --- alguien que llega tarde ---------------------------------------------------------------
+
+
+def late_join_url(group) -> str:
+    return f"/groups/{group['slug']}/late-join"
+
+
+async def drawn_and_seen_by(group, *names: str) -> None:
+    await close(group)
+    await draw(group)
+    for name in names:
+        assert (await reveal(group["clients"][name], group["slug"])).status_code == 200
+
+
+async def test_cannot_join_after_draw_unless_the_admin_allows_it(group, new_client) -> None:
+    await drawn_and_seen_by(group)
+
+    async with new_client() as xavi:
+        response = await xavi.post(
+            f"/groups/{group['slug']}/participants", json={"name": "Xavi", "pin": "5678"}
+        )
+
+    assert response.status_code == 409
+
+
+async def test_late_joiner_only_moves_someone_who_had_not_looked(group, db, new_client) -> None:
+    slug = group["slug"]
+    await drawn_and_seen_by(group, "Ana", "Luis")
+    before = await gives_to(db)
+
+    response = await group["admin"].post(late_join_url(group))
+    assert response.status_code == 200
+    assert response.json()["late_join_open"] is True
+
+    async with new_client() as xavi:
+        xavi_id = (await join(xavi, slug, "Xavi"))["id"]
+        assert (await reveal(xavi, slug)).status_code == 200
+
+    after = await gives_to(db)
+    everyone = set(before) | {xavi_id}
+    assert set(after) == everyone and set(after.values()) == everyone
+    changed = [g for g in before if before[g] != after[g]]
+    assert len(changed) == 1
+    assert changed[0] in {group["ids"]["Marta"], group["ids"]["Pablo"]}
+    assert after[changed[0]] == xavi_id
+    assert after[xavi_id] == before[changed[0]]
+
+
+async def test_several_people_can_join_late_while_there_is_room(group, db, new_client) -> None:
+    slug = group["slug"]
+    await drawn_and_seen_by(group, "Ana", "Luis")
+    seen = {group["ids"]["Ana"], group["ids"]["Luis"]}
+    before = await gives_to(db)
+    await group["admin"].post(late_join_url(group))
+
+    async with new_client() as xavi, new_client() as yago:
+        # Xavi no mira: así también puede moverse para que entre Yago.
+        ids = {(await join(xavi, slug, "Xavi"))["id"], (await join(yago, slug, "Yago"))["id"]}
+
+    after = await gives_to(db)
+    everyone = set(before) | ids
+    assert set(after) == everyone and set(after.values()) == everyone
+    assert all(giver != receiver for giver, receiver in after.items())
+    assert all(after[p] == before[p] for p in seen)  # quien ya miró sigue igual
+    assert (await client_group(group))["late_join_open"] is True
+
+
+async def test_late_join_fails_when_there_is_no_room_left(group, db, new_client) -> None:
+    slug = group["slug"]
+    await drawn_and_seen_by(group, "Ana", "Luis")
+    await group["admin"].post(late_join_url(group))
+    # Mientras estaba abierto, Marta mira: solo queda Pablo sin mirar.
+    assert (await reveal(group["clients"]["Marta"], slug)).status_code == 200
+
+    async with new_client() as xavi:
+        response = await xavi.post(
+            f"/groups/{slug}/participants", json={"name": "Xavi", "pin": "5678"}
+        )
+
+    assert response.status_code == 409
+    assert "no queda hueco" in response.json()["detail"]
+    assert len(await gives_to(db)) == 4  # y no se ha creado a nadie
+
+
+async def client_group(group) -> dict[str, Any]:
+    return (await group["admin"].get(f"/groups/{group['slug']}")).json()
+
+
+async def test_late_join_needs_two_people_who_have_not_looked(group) -> None:
+    await drawn_and_seen_by(group, "Ana", "Luis", "Marta")
+
+    response = await group["admin"].post(late_join_url(group))
+
+    assert response.status_code == 409
+    assert "no queda hueco" in response.json()["detail"]
+
+
+async def test_closed_late_join_lets_nobody_in(group, new_client) -> None:
+    await drawn_and_seen_by(group)
+    await group["admin"].post(late_join_url(group))
+
+    assert (await group["admin"].delete(late_join_url(group))).status_code == 200
+
+    async with new_client() as xavi:
+        response = await xavi.post(
+            f"/groups/{group['slug']}/participants", json={"name": "Xavi", "pin": "5678"}
+        )
+    assert response.status_code == 409
+
+
+async def test_late_joiner_gets_the_messages_written_to_their_receivers_giver(
+    group, new_client
+) -> None:
+    slug, clients = group["slug"], group["clients"]
+    await drawn_and_seen_by(group, "Ana", "Luis")
+    # Todos escriben a quien les regala, aunque esa persona no haya mirado todavía.
+    for name, client in clients.items():
+        sent = await client.post(
+            f"/groups/{slug}/chat/receiver/messages", json={"body": f"hola, soy {name}"}
+        )
+        assert sent.status_code == 201
+    await group["admin"].post(late_join_url(group))
+
+    async with new_client() as xavi:
+        await join(xavi, slug, "Xavi")
+        receiver = (await reveal(xavi, slug)).json()["receiver"]["name"]
+        messages = (await xavi.get(f"/groups/{slug}/chat/giver")).json()["messages"]
+
+    assert [(m["body"], m["mine"]) for m in messages] == [(f"hola, soy {receiver}", False)]
+
+
+async def test_only_admin_opens_late_join_and_only_after_draw(group) -> None:
+    assert (await group["admin"].post(late_join_url(group))).status_code == 409  # sin sorteo
+
+    await drawn_and_seen_by(group)
+
+    assert (await group["clients"]["Luis"].post(late_join_url(group))).status_code == 403
+    assert (await group["clients"]["Luis"].delete(late_join_url(group))).status_code == 403

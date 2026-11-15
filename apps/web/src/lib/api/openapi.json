@@ -693,6 +693,89 @@
         }
       }
     },
+    "/groups/{slug}/late-join": {
+      "post": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Open Late Join",
+        "description": "Deja entrar a gente que llega después del sorteo.\n\nMientras esté abierto, quien tenga el enlace puede unirse y entra en el sorteo al momento\n(ver `insert_late`). Puede entrar más de una persona, mientras quede hueco: cada alta lo\nvuelve a comprobar. Solo se abre si ahora mismo lo hay.",
+        "operationId": "open_late_join_groups__slug__late_join_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "draw"
+        ],
+        "summary": "Close Late Join",
+        "operationId": "close_late_join_groups__slug__late_join_delete",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{slug}/me/reveal": {
       "post": {
         "tags": [
@@ -1594,6 +1677,11 @@
               }
             ],
             "title": "Unmasked At"
+          },
+          "late_join_open": {
+            "type": "boolean",
+            "title": "Late Join Open",
+            "default": false
           }
         },
         "type": "object",
